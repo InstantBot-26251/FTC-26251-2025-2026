@@ -65,8 +65,6 @@ public class Enigma {
         kickerSubsystem = new KickerSubsystem();
         subsystems.add(kickerSubsystem);
 
-
-
         telemetry.addData("Subsystems", "Initialized (" + subsystems.size() + ")");
     }
 
@@ -85,7 +83,6 @@ public class Enigma {
         if (kickerSubsystem != null) {
             kickerSubsystem.reset();
         }
-        // Add other subsystem resets here
 
         telemetry.addData("Robot", "Reset");
     }

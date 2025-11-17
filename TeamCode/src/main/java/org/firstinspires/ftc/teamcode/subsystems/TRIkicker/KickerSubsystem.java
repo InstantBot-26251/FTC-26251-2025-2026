@@ -15,7 +15,7 @@ import java.util.Map;
 public class KickerSubsystem extends SubsystemBase {
     private Slot[] slots = new Slot[3];
     private OperatingMode currentMode = OperatingMode.TELEOP;
-    private String targetPattern; // Default pattern
+    private String targetMotif; // Default motif
 
     // Artifact tracking - maps slot number (0-2) to artifact info
     private Map<Integer, ArtifactSlot> artifactSlots = new HashMap<>();
@@ -207,16 +207,16 @@ public class KickerSubsystem extends SubsystemBase {
         Log.i("Kicker", "Reset all artifact tracking");
     }
 
-    //------------------------PATTERN MATCHING---------------------------//
+    //------------------------MOPTIF MATCHING---------------------------//
 
     /**
-     * Set the target pattern from AprilTag detection
-     * @param pattern String like "PGP", "PPG", or "GPP"
+     * Set the target motif from AprilTag detection
+     * @param motif String like "PGP", "PPG", or "GPP"
      */
-    public void setTargetPattern(String pattern) {
-        // targetPattern = vision.getTargetPattern()
-        this.targetPattern = pattern.toUpperCase();
-        Log.i("Kicker", "Target pattern set to: " + this.targetPattern);
+    public void setTargetPattern(String motif) {
+        // targetMotif = vision.getTargetMotif()
+        this.targetMotif = motif.toUpperCase();
+        Log.i("Kicker", "Target pattern set to: " + this.targetMotif);
     }
 
     /**
@@ -242,7 +242,7 @@ public class KickerSubsystem extends SubsystemBase {
      * Check if a specific slot matches its target based on tracked artifacts
      */
     public boolean slotMatchesTarget(int slotIndex) {
-        if (slotIndex < 0 || slotIndex >= 3 || targetPattern.length() != 3) {
+        if (slotIndex < 0 || slotIndex >= 3 || targetMotif.length() != 3) {
             return false;
         }
 
@@ -252,7 +252,7 @@ public class KickerSubsystem extends SubsystemBase {
         }
 
         ArtifactColor detected = slot.getColor();
-        char target = targetPattern.charAt(slotIndex);
+        char target = targetMotif.charAt(slotIndex);
 
         if (target == 'P' && detected == ArtifactColor.PURPLE) return true;
         if (target == 'G' && detected == ArtifactColor.GREEN) return true;

@@ -37,7 +37,7 @@ public class KickSequenceCommand extends CommandBase {
             shouldKick[2] = true;
             Log.i("KickSequence", "TELEOP mode - kicking all slots");
         } else {
-            // In auto, only kick slots that match the pattern
+            // In auto/endgame, only kick slots that match the pattern
             shouldKick[0] = kicker.slotMatchesTarget(0);
             shouldKick[1] = kicker.slotMatchesTarget(1);
             shouldKick[2] = kicker.slotMatchesTarget(2);
