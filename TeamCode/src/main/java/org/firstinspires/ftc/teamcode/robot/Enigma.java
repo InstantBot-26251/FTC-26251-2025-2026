@@ -79,7 +79,7 @@ public class Enigma {
     }
 
     /**
-     * Reset the robot - useful for switching between auto and teleop
+     * Reset the robot - use when switching between auto and teleop
      */
     public void reset() {
         // Reset kicker subsystem
@@ -90,10 +90,14 @@ public class Enigma {
         telemetry.addData("Robot", "Reset");
     }
 
-    // ===================== GETTERS =====================
+    //------------------------GETTERS------------------------//
 
     public KickerSubsystem getKickerSubsystem() {
         return kickerSubsystem;
+    }
+
+    public DriveSubsystem getDriveSubsystem() {
+        return driveSubsystem;
     }
 
     public HardwareMap getHardwareMap() {

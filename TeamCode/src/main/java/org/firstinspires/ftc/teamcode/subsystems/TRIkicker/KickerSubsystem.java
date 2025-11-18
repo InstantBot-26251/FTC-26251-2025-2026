@@ -144,7 +144,6 @@ public class KickerSubsystem extends SubsystemTemplate {
 
     /**
      * Finds the slot number containing the specified color
-     * @return slot number (0-2) or -1 if not found
      */
     public int findArtifactSlot(ArtifactColor targetColor) {
         for (int i = 0; i < 3; i++) {
@@ -206,11 +205,10 @@ public class KickerSubsystem extends SubsystemTemplate {
         Log.i("Kicker", "Reset all artifact tracking");
     }
 
-    //------------------------MOPTIF MATCHING---------------------------//
+    //------------------------MOTIF MATCHING---------------------------//
 
     /**
      * Set the target motif from AprilTag detection
-     * @param motif String like "PGP", "PPG", or "GPP"
      */
     public void setTargetPattern(String motif) {
         // targetMotif = vision.getTargetMotif()
@@ -259,7 +257,7 @@ public class KickerSubsystem extends SubsystemTemplate {
         return false;
     }
 
-    //------------------------MODE & CONTROL------------------------
+    //------------------------MODE & CONTROL------------------------//
 
     /**
      * Set the operating mode
@@ -355,13 +353,13 @@ public class KickerSubsystem extends SubsystemTemplate {
     @Override
     public void onAutonomousPeriodic() {
         // Intentionally empty - artifact tracking is done explicitly
-        // during intake operations to minimize I2C calls
+        // during intakes to minimize I2C calls
     }
 
     @Override
     public void onTeleopPeriodic() {
         // Intentionally empty - artifact tracking is done explicitly
-        // during intake operations to minimize I2C calls
+        // during intakes to minimize I2C calls
     }
 
     @Override

@@ -15,7 +15,7 @@ public class ShooterConstants {
     // Empirically determined hood positions at various distances
     // TODO: Fill these in after testing! Format: {distance_in_inches, hood_servo_position}
     public static final double[][] HOOD_LOOKUP_TABLE = {
-            {30.0, 0.10},   // ~30 inches - Example data, replace with real values
+            {30.0, 0.10},   // ~30 inches - Example data, replace with real values once tested, run hoodtesting
             {36.0, 0.15},   // ~3 feet
             {42.0, 0.20},   // ~3.5 feet
             {48.0, 0.25},   // 4 feet

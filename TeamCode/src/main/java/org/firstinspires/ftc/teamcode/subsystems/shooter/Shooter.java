@@ -79,9 +79,9 @@ public class Shooter extends SubsystemTemplate {
         shooterMotor1 = map.SHOOTER_0;
         shooterMotor2 = map.SHOOTER_1;
 
-        // Set motor directions (adjust based on your setup)
+        // Set motor directions
         shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
-        shooterMotor2.setDirection(DcMotor.Direction.REVERSE); // Typically reversed to match
+        shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
 
         // Set motor modes
         shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -98,7 +98,6 @@ public class Shooter extends SubsystemTemplate {
 
     /**
      * Set shooter motors to a specific power
-     * @param power Power from 0.0 to 1.0
      */
     public void setShooterPower(double power) {
         power = Math.max(0.0, Math.min(1.0, power)); // Clamp between 0 and 1
@@ -122,7 +121,6 @@ public class Shooter extends SubsystemTemplate {
 
     /**
      * Set hood to a specific position
-     * @param position Position from 0.0 (flat) to 1.0 (max angle)
      */
     public void setHoodPosition(double position) {
         position = Math.max(HOOD_MIN_POSITION, Math.min(HOOD_MAX_POSITION, position));
@@ -131,7 +129,6 @@ public class Shooter extends SubsystemTemplate {
 
     /**
      * Get the current distance to the AprilTag using vision
-     * @return Distance in inches, or -1 if no tag detected
      */
     public double getTargetDistance() {
         ArrayList<AprilTagDetection> detections = vision.getDetections();
@@ -149,8 +146,6 @@ public class Shooter extends SubsystemTemplate {
     /**
      * Calculate the ideal hood position based on distance using linear interpolation
      * This uses an empirically-determined lookup table
-     * @param distance Distance to target in inches
-     * @return Hood servo position from 0.0 to 1.0
      */
     private double calculateHoodAngle(double distance) {
         // Handle edge cases
@@ -182,7 +177,6 @@ public class Shooter extends SubsystemTemplate {
 
     /**
      * Automatically adjust hood angle based on AprilTag distance
-     * @return true if successful, false if no target detected
      */
     public boolean autoAimHood() {
         double distance = getTargetDistance();
@@ -202,8 +196,7 @@ public class Shooter extends SubsystemTemplate {
     }
 
     /**
-     * Get current shooter velocity (average of both motors)
-     * @return Velocity in ticks per second
+     * Get current shooter velocity (average of both motors) - ticks per second
      */
     public double getShooterVelocity() {
         return (shooterMotor1.getVelocity() + shooterMotor2.getVelocity()) / 2.0;
@@ -211,18 +204,14 @@ public class Shooter extends SubsystemTemplate {
 
     /**
      * Check if shooter is at target velocity
-     * @param targetVelocity Target velocity in ticks per second
-     * @param tolerance Acceptable error margin
-     * @return true if at speed
      */
     public boolean isAtSpeed(double targetVelocity, double tolerance) {
         double currentVelocity = getShooterVelocity();
-        return Math.abs(currentVelocity - targetVelocity) < tolerance;
+        return Math.abs(currentVelocity - targetVelocity) < tolerance; // acceptable error margin
     }
 
     /**
      * Get current hood position
-     * @return Hood servo position
      */
     public double getHoodPosition() {
         return hoodServo.getPosition();

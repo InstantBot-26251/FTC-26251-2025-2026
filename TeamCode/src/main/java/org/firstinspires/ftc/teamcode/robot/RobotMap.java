@@ -52,9 +52,6 @@ public class RobotMap {
         return INSTANCE;
     }
 
-    /**
-     * Initialize all hardware from hardware map
-     */
     public void init(HardwareMap hardwareMap) {
         // Initialize drive motors
         FRONT_RIGHT = hardwareMap.get(DcMotorEx.class, "rf");
