@@ -6,6 +6,7 @@ import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.TRIkicker.KickerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.drive.DriveSubsystem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class Enigma {
 
     // Subsystems
     private KickerSubsystem kickerSubsystem;
+    private DriveSubsystem driveSubsystem;
 
     // List to track all subsystems for periodic updates
     private List<SubsystemBase> subsystems = new ArrayList<>();
@@ -64,6 +66,9 @@ public class Enigma {
         // Initialize kicker subsystem
         kickerSubsystem = new KickerSubsystem();
         subsystems.add(kickerSubsystem);
+
+        driveSubsystem = new DriveSubsystem();
+        subsystems.add(driveSubsystem);
 
         telemetry.addData("Subsystems", "Initialized (" + subsystems.size() + ")");
     }

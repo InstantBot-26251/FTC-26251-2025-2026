@@ -260,7 +260,7 @@ public class KickerSubsystem extends SubsystemBase {
         return false;
     }
 
-    // ========================= MODE & CONTROL =========================
+    //------------------------MODE & CONTROL------------------------
 
     /**
      * Set the operating mode
