@@ -18,7 +18,6 @@ public class Enigma {
     // Hardware and telemetry references
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
-    private OpMode opMode;
 
     // Subsystems
     private KickerSubsystem kickerSubsystem;
@@ -45,10 +44,9 @@ public class Enigma {
     /**
      * Initialize the robot with hardware map and telemetry
      */
-    public void init(HardwareMap hardwareMap, Telemetry telemetry, OpMode opMode) {
+    public void init(HardwareMap hardwareMap, Telemetry telemetry) {
         this.hardwareMap = hardwareMap;
         this.telemetry = telemetry;
-        this.opMode = opMode;
 
         // Initialize subsystems
         initSubsystems();
@@ -106,8 +104,5 @@ public class Enigma {
         return telemetry;
     }
 
-    public OpMode getOpMode() {
-        return opMode;
-    }
 
 }

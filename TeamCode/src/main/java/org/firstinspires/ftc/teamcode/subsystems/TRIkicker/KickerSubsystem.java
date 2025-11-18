@@ -2,17 +2,16 @@ package org.firstinspires.ftc.teamcode.subsystems.TRIkicker;
 
 import android.util.Log;
 
-import com.seattlesolvers.solverslib.command.SubsystemBase;
-
 import org.firstinspires.ftc.teamcode.subsystems.TRIkicker.enums.ArtifactColor;
 import org.firstinspires.ftc.teamcode.subsystems.TRIkicker.enums.OperatingMode;
 
 import org.firstinspires.ftc.teamcode.robot.RobotMap;
+import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class KickerSubsystem extends SubsystemBase {
+public class KickerSubsystem extends SubsystemTemplate {
     private Slot[] slots = new Slot[3];
     private OperatingMode currentMode = OperatingMode.TELEOP;
     private String targetMotif; // Default motif
@@ -326,5 +325,53 @@ public class KickerSubsystem extends SubsystemBase {
     public void periodic() {
         // Intentionally empty - we don't want to scan sensors every loop
         // Only scan when explicitly called during intakes
+    }
+
+
+    @Override
+    public void onAutonomousInit() {
+        resetAllSlots();
+        resetArtifactTracking();
+        setMode(OperatingMode.AUTO);
+        Log.i("Kicker", "Autonomous initialized");
+    }
+
+    @Override
+    public void onTeleopInit() {
+        resetAllSlots();
+        resetArtifactTracking();
+        setMode(OperatingMode.TELEOP);
+        Log.i("Kicker", "Teleop initialized");
+    }
+
+    @Override
+    public void onTestInit() {
+        resetAllSlots();
+        resetArtifactTracking();
+        setMode(OperatingMode.TELEOP);
+        Log.i("Kicker", "Test mode initialized");
+    }
+
+    @Override
+    public void onAutonomousPeriodic() {
+        // Intentionally empty - artifact tracking is done explicitly
+        // during intake operations to minimize I2C calls
+    }
+
+    @Override
+    public void onTeleopPeriodic() {
+        // Intentionally empty - artifact tracking is done explicitly
+        // during intake operations to minimize I2C calls
+    }
+
+    @Override
+    public void onTestPeriodic() {
+        // Intentionally empty
+    }
+
+    @Override
+    public void onDisable() {
+        resetAllSlots();
+        Log.i("Kicker", "Disabled - all slots reset");
     }
 }
