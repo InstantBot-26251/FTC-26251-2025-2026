@@ -37,7 +37,7 @@ public class IntakeCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // Stop intake motor if you have one
+        // Stop intake motor (add in later)
     }
 }
 

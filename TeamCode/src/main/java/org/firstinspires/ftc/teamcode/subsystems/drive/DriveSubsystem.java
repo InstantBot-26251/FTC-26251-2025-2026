@@ -53,15 +53,6 @@ public class DriveSubsystem extends SubsystemBase {
 
     //------------------------TELEOP DRIVE------------------------//
 
-    /**
-     * Set teleop drive using Pedro Pathing's built-in teleop control
-     * This is the official Pedro 2.0.4 way to drive in teleop
-     *
-     * @param forwardSpeed Forward/backward input (-1 to 1, typically -gamepad.left_stick_y)
-     * @param strafeSpeed Strafe left/right input (-1 to 1, typically -gamepad.left_stick_x)
-     * @param turnSpeed Rotation input (-1 to 1, typically -gamepad.right_stick_x)
-     * @param robotCentric true for robot-centric, false for field-centric
-     */
     public void setTeleOpDrive(double forwardSpeed, double strafeSpeed, double turnSpeed, boolean robotCentric) {
         if (!automatedDrive) {
             // Apply slow mode multiplier if enabled
@@ -79,14 +70,14 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     /**
-     * Field-centric teleop drive (convenience method)
+     * Field-centric teleop drive
      */
     public void driveFieldCentric(double forwardSpeed, double strafeSpeed, double turnSpeed) {
         setTeleOpDrive(forwardSpeed, strafeSpeed, turnSpeed, false);
     }
 
     /**
-     * Robot-centric teleop drive (convenience method)
+     * Robot-centric teleop drive
      */
     public void driveRobotCentric(double forwardSpeed, double strafeSpeed, double turnSpeed) {
         setTeleOpDrive(forwardSpeed, strafeSpeed, turnSpeed, true);
@@ -94,10 +85,6 @@ public class DriveSubsystem extends SubsystemBase {
 
     //------------------------PEDRO PATHING AUTONOMOUS------------------------//
 
-    /**
-     * @param path Path to follow
-     * @param holdEnd Whether to hold the end position
-     */
     public void followPath(com.pedropathing.paths.Path path, boolean holdEnd) {
         if (follower != null) {
             follower.followPath(path, holdEnd);
@@ -208,7 +195,7 @@ public class DriveSubsystem extends SubsystemBase {
 //    }
 
     /**
-     * Get the Pedro Pathing follower (idk why i have use only sometimes AdVaNCeD UsAGEs)
+     * Get the Pedro Pathing follower (idk why i have, use only sometimes --> AdVaNCeD UsAGEs)
      */
     public Follower getFollower() {
         return follower;
@@ -310,7 +297,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // CRITICAL: Must call follower.update() once per loop
+        // IMPORTANTIAL: Must call follower.update() once per loop
         if (follower != null) {
             follower.update();
         }
