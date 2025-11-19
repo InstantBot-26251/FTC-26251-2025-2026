@@ -2,8 +2,14 @@ package org.firstinspires.ftc.teamcode.subsystems.drive;
 
 import android.util.Log;
 
+import static org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants.*;
+
+
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
+
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -29,12 +35,21 @@ public class DriveSubsystem extends SubsystemBase {
     // Track if we're following an automated path in teleop
     private boolean automatedDrive = false;
 
+    private boolean headingLockEnabled = false;
+    private double targetHeading = 0.0; // Target heading in radians
+    private PIDFController headingPID;
+
+
+
     public DriveSubsystem() {
         // This is the official Pedro 2.0.4 initialization method
         follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
 
         // Set default starting pose
         follower.setStartingPose(new Pose(0, 0, 0));
+
+        // Initialize PIDF Controller
+        headingPID = new PIDFController(new PIDFCoefficients(HEADING_kP, HEADING_kI, HEADING_kD, HEADING_kF));
 
         Log.i("Drive", "DriveSubsystem initialized with Pedro Pathing 2.0.4");
     }
@@ -83,7 +98,118 @@ public class DriveSubsystem extends SubsystemBase {
         setTeleOpDrive(forwardSpeed, strafeSpeed, turnSpeed, true);
     }
 
-    //------------------------PEDRO PATHING AUTONOMOUS------------------------//
+    //------------------------HEADING LOCK------------------------//
+
+    /**
+     * Lock the current heading - robot will maintain this heading until disengaged
+     */
+    public void lockCurrentHeading() {
+        targetHeading = getPose().getHeading();
+        headingLockEnabled = true;
+        headingPID.reset();
+        headingPID.setTargetPosition(targetHeading);
+        Log.i("Drive", "Heading locked at: " + Math.toDegrees(targetHeading) + " degrees");
+    }
+
+    /**
+     * Lock to a specific heading in radians
+     */
+    public void lockHeading(double headingRadians) {
+        targetHeading = normalizeAngle(headingRadians);
+        headingLockEnabled = true;
+        headingPID.reset();
+        headingPID.setTargetPosition(targetHeading);
+        Log.i("Drive", "Heading locked to: " + Math.toDegrees(targetHeading) + " degrees");
+    }
+
+    /**
+     * Lock to a specific heading in degrees
+     */
+    public void lockHeadingDegrees(double headingDegrees) {
+        lockHeading(Math.toRadians(headingDegrees));
+    }
+
+    /**
+     * Lock to cardinal directions (0, 90, 180, 270 degrees)
+     */
+    public void lockToCardinal() {
+        double currentHeadingDegrees = Math.toDegrees(getPose().getHeading());
+
+        // Find nearest cardinal direction
+        double nearest = Math.round(currentHeadingDegrees / 90.0) * 90.0;
+        lockHeadingDegrees(nearest);
+
+        Log.i("Drive", "Locked to nearest cardinal: " + nearest + " degrees");
+    }
+
+    /**
+     * Disable heading lock
+     */
+    public void disableHeadingLock() {
+        headingLockEnabled = false;
+        headingPID.reset();
+        Log.i("Drive", "Heading lock disabled");
+    }
+
+    /**
+     * Toggle heading lock on/off
+     * If turning on, locks to current heading
+     */
+    public void toggleHeadingLock() {
+        if (headingLockEnabled) {
+            disableHeadingLock();
+        } else {
+            lockCurrentHeading();
+        }
+    }
+
+    /**
+     * Check if heading lock is enabled
+     */
+    public boolean isHeadingLockEnabled() {
+        return headingLockEnabled;
+    }
+
+    /**
+     * Get the target locked heading in radians
+     */
+    public double getTargetHeading() {
+        return targetHeading;
+    }
+
+    /**
+     * Get the heading error in radians (how far from target)
+     */
+    public double getHeadingError() {
+        return normalizeAngle(targetHeading - getPose().getHeading());
+    }
+
+    /**
+     * Check if robot is at target heading (within tolerance)
+     */
+    public boolean isAtTargetHeading() {
+        return headingLockEnabled && Math.abs(headingError) < HEADING_TOLERANCE;
+    }
+
+    /**
+     * Update heading PID constants for tuning
+     */
+    public void setHeadingPID(double kP, double kI, double kD) {
+        headingPID.setCoefficients(new PIDFCoefficients(kP, kI, kD, HEADING_kF));
+        Log.i("Drive", String.format("Heading PID updated: kP=%.3f, kI=%.3f, kD=%.3f", kP, kI, kD));
+    }
+
+    /**
+     * Normalize angle to [-PI, PI] range
+     */
+    private double normalizeAngle(double angleRadians) {
+        while (angleRadians > Math.PI) angleRadians -= 2 * Math.PI;
+        while (angleRadians < -Math.PI) angleRadians += 2 * Math.PI;
+        return angleRadians;
+    }
+
+
+    //------------------------AUTONOMOUS------------------------//
 
     public void followPath(com.pedropathing.paths.Path path, boolean holdEnd) {
         if (follower != null) {
@@ -301,6 +427,27 @@ public class DriveSubsystem extends SubsystemBase {
         if (follower != null) {
             follower.update();
         }
+
+        // Update heading lock PID if enabled
+        if (headingLockEnabled) {
+            // Update PID coefficients from FTC Dashboard
+            headingPID.setCoefficients(new PIDFCoefficients(HEADING_kP, HEADING_kI, HEADING_kD, HEADING_kF));
+
+            // Calculate error
+            double currentHeading = getPose().getHeading();
+            headingError = normalizeAngle(targetHeading - currentHeading);
+
+            // Update PID and get output
+            headingPID.updateError(headingError);
+            headingPower = headingPID.run();
+
+            // Clamp power to reasonable range
+            headingPower = Math.max(-0.5, Math.min(0.5, headingPower));
+        } else {
+            headingError = 0.0;
+            headingPower = 0.0;
+        }
+
 
         // If in teleop and automated path is done, return to manual control
         if (currentMode != DriveMode.AUTONOMOUS && automatedDrive && !follower.isBusy()) {
