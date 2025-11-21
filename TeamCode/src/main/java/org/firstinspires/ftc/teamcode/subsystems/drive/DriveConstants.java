@@ -16,4 +16,9 @@ public class DriveConstants {
     public static double headingError = 0.0;
     public static double headingPower = 0.0;
 
+    // For auto-aim
+    public static double currentHeading = 0.0;
+    public static double shootHeadingCLOSE = 0.0; // TODO: Tune: just do localization test and then get the current heading and put it here
+    public static double shootHeadingFAR = 0.0; // TODO: Tune: just do localization test and then get the current heading and put it here
+
 }

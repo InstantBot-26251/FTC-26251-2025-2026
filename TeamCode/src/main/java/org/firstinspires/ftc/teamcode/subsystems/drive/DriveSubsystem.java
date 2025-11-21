@@ -40,7 +40,6 @@ public class DriveSubsystem extends SubsystemBase {
     private PIDFController headingPID;
 
 
-
     public DriveSubsystem() {
         // This is the official Pedro 2.0.4 initialization method
         follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
@@ -141,6 +140,25 @@ public class DriveSubsystem extends SubsystemBase {
 
         Log.i("Drive", "Locked to nearest cardinal: " + nearest + " degrees");
     }
+
+    /*
+    * Auto Aim CLOSE
+    */
+    public void autoAimHeadingCLOSE() {
+        lockHeading(shootHeadingCLOSE); // TODO: check if shootHeadingCLOSE is in radians or degrees
+
+        Log.i("Drive", "Locked to close shooting heading: " + shootHeadingCLOSE + " degrees");
+    }
+
+    /*
+     * Auto Aim FAR
+     */
+    public void autoAimHeadingFAR() {
+        lockHeading(shootHeadingCLOSE); // TODO: check if shootHeadingFAR is in radians or degrees
+
+        Log.i("Drive", "Locked to far shooting heading: " + shootHeadingFAR + " degrees");
+    }
+
 
     /**
      * Disable heading lock
