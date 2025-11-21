@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.subsystems.TRIkicker.KickerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.drive.DriveSubsystem;
 
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ public class Enigma {
     private Telemetry telemetry;
 
     // Subsystems
-    private KickerSubsystem kickerSubsystem;
     private DriveSubsystem driveSubsystem;
 
     // List to track all subsystems for periodic updates
@@ -61,10 +59,6 @@ public class Enigma {
     private void initSubsystems() {
         subsystems.clear();
 
-        // Initialize kicker subsystem
-        kickerSubsystem = new KickerSubsystem();
-        subsystems.add(kickerSubsystem);
-
         driveSubsystem = new DriveSubsystem();
         subsystems.add(driveSubsystem);
 
@@ -78,23 +72,7 @@ public class Enigma {
         }
     }
 
-    /**
-     * Reset the robot - use when switching between auto and teleop
-     */
-    public void reset() {
-        // Reset kicker subsystem
-        if (kickerSubsystem != null) {
-            kickerSubsystem.reset();
-        }
-
-        telemetry.addData("Robot", "Reset");
-    }
-
     //------------------------GETTERS------------------------//
-
-    public KickerSubsystem getKickerSubsystem() {
-        return kickerSubsystem;
-    }
 
     public DriveSubsystem getDriveSubsystem() {
         return driveSubsystem;
