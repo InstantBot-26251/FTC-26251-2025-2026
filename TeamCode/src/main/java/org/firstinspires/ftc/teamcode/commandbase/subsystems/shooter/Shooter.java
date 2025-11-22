@@ -1,16 +1,16 @@
-package org.firstinspires.ftc.teamcode.subsystems.shooter;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter;
 
-import static org.firstinspires.ftc.teamcode.subsystems.shooter.ShooterConstants.*;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.ShooterConstants.*;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robot.Enigma;
-import org.firstinspires.ftc.teamcode.robot.RobotMap;
+import org.firstinspires.ftc.teamcode.globals.Enigma;
+import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
-import org.firstinspires.ftc.teamcode.vision.ATVision;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;

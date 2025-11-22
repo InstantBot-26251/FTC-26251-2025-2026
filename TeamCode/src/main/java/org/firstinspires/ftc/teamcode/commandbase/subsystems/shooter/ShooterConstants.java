@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystems.shooter;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter;
 
 import com.acmerobotics.dashboard.config.Config;
 

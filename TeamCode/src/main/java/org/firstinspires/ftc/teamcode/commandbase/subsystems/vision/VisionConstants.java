@@ -1,5 +1,5 @@
 
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.vision;
 
 public class VisionConstants {
     // Arducam lens intrinsics

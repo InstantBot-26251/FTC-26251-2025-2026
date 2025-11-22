@@ -1,8 +1,8 @@
-package org.firstinspires.ftc.teamcode.subsystems.drive;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.drive;
 
 import android.util.Log;
 
-import static org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants.*;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveConstants.*;
 
 
 import com.pedropathing.follower.Follower;
@@ -12,12 +12,103 @@ import com.pedropathing.control.PIDFController;
 
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-import org.firstinspires.ftc.teamcode.robot.Enigma;
+import org.firstinspires.ftc.teamcode.globals.Enigma;
+import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
-public class DriveSubsystem extends SubsystemBase {
+public class DriveSubsystem extends SubsystemTemplate {
+
+    private static final DriveSubsystem INSTANCE = new DriveSubsystem();
+
+    public static DriveSubsystem getInstance() {
+        return INSTANCE;
+    }
 
     private Follower follower;
+
+    @Override
+    public void onAutonomousInit() {
+        currentMode = DriveMode.AUTONOMOUS;
+        automatedDrive = false;
+        slowModeEnabled = false;
+        disableHeadingLock();
+
+        // Note: Starting pose should be set by the autonomous OpMode
+        // before paths are followed
+
+        Log.i("Drive", "Autonomous initialized - ready for path following");
+    }
+
+    @Override
+    public void onTeleopInit() {
+        // Start teleop drive mode with brake mode enabled
+        startTeleopDrive(true);
+
+        // Set default teleop mode
+        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
+
+        // Reset slow mode to default
+        slowModeEnabled = false;
+        slowModeMultiplier = 0.5;
+
+        // Disable heading lock from autonomous
+        disableHeadingLock();
+
+        // Ensure no automated paths are running
+        if (automatedDrive) {
+            breakFollowing();
+        }
+
+        Log.i("Drive", "Teleop initialized - manual control enabled");
+    }
+
+    @Override
+    public void onTeleopPeriodic() {
+
+    }
+
+    @Override
+    public void onAutonomousPeriodic() {
+
+    }
+
+    @Override
+    public void onTestPeriodic() {
+
+    }
+
+    @Override
+    public void onTestInit() {
+        startTeleopDrive(true);
+        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
+        slowModeEnabled = false;
+        disableHeadingLock();
+
+        // Reset pose to origin for testing
+        setStartingPose(0, 0, 0);
+
+        Log.i("Drive", "Test mode initialized - ready for tuning and testing");
+    }
+
+    @Override
+    public void onDisable() {
+        // Stop all drive activity when robot is disabled
+
+        // Break any following paths
+        if (automatedDrive) {
+            breakFollowing();
+        }
+
+        // Disable heading lock
+        disableHeadingLock();
+
+        // Reset state flags
+        automatedDrive = false;
+        slowModeEnabled = false;
+
+        Log.i("Drive", "Drive subsystem disabled - all motion stopped");
+    }
 
     // Drive mode tracking
     public enum DriveMode {

@@ -3,9 +3,10 @@ package org.firstinspires.ftc.teamcode.opmodes.test;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.robot.Enigma;
-import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
-import org.firstinspires.ftc.teamcode.vision.ATVision;
+import org.firstinspires.ftc.teamcode.globals.Enigma;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
+import org.firstinspires.ftc.teamcode.util.Alliance;
 
 @TeleOp(name = "Test: Shooter", group = "Test")
 public class ShooterTest extends LinearOpMode {
@@ -17,7 +18,7 @@ public class ShooterTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         // Initialize robot
         Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, telemetry);
+        robot.init(hardwareMap, Alliance.BLUE);
 
         shooter = Shooter.getInstance();
         vision = ATVision.getInstance();

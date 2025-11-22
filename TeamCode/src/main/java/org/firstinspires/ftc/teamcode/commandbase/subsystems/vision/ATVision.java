@@ -1,15 +1,15 @@
-package org.firstinspires.ftc.teamcode.vision;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.vision;
 
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.arducam_cx;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.arducam_cy;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.arducam_fx;
-import static org.firstinspires.ftc.teamcode.vision.VisionConstants.arducam_fy;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.VisionConstants.arducam_cx;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.VisionConstants.arducam_cy;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.VisionConstants.arducam_fx;
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.VisionConstants.arducam_fy;
 
 import android.util.Size;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.robot.Enigma;
-import org.firstinspires.ftc.teamcode.robot.RobotMap;
+import org.firstinspires.ftc.teamcode.globals.Enigma;
+import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
