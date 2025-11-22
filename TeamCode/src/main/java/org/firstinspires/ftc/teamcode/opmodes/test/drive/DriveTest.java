@@ -1,12 +1,7 @@
-package org.firstinspires.ftc.teamcode.opmodes.test;
+package org.firstinspires.ftc.teamcode.opmodes.test.drive;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
-import org.firstinspires.ftc.teamcode.util.Alliance;
 
 @TeleOp(name = "Test: Drive", group = "Test")
 public class DriveTest extends OpMode {
