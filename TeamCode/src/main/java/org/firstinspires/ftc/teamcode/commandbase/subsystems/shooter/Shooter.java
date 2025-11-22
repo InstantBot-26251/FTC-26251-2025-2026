@@ -69,21 +69,34 @@ public class Shooter extends SubsystemTemplate {
         telemetry = Enigma.getInstance().getTelemetry();
         vision = ATVision.getInstance();
         initHardware();
+
+        telemetry.addData("TEST MODE", "Shooter subsystem initialized");
+        telemetry.addData("Instructions", "Use gamepad to test shooter");
     }
 
     @Override
     public void onAutonomousPeriodic() {
+        updateVelocityControl();
         updateTelemetry();
     }
 
     @Override
     public void onTeleopPeriodic() {
+        updateVelocityControl();
         updateTelemetry();
     }
 
     @Override
     public void onTestPeriodic() {
+        updateVelocityControl();
         updateTelemetry();
+
+        // Add diagnostic info in test mode
+        telemetry.addData("=== DIAGNOSTICS ===", "");
+        telemetry.addData("Motor 1 Power", "%.2f", shooterMotor1.getPower());
+        telemetry.addData("Motor 2 Power", "%.2f", shooterMotor2.getPower());
+        telemetry.addData("Velocity Control Active", activeVelocityControl);
+        telemetry.addData("PIDF at SetPoint", shooterController.atSetPoint());
     }
 
     @Override
@@ -153,6 +166,63 @@ public class Shooter extends SubsystemTemplate {
     }
 
     /**
+     * Check if shooter is ready to fire
+     */
+    public boolean isReadyToShoot() {
+        if (!activeVelocityControl) {
+            return false; // Must be in velocity control mode
+        }
+
+        return shooterController.atSetPoint();
+    }
+
+    /**
+     * Increase target velocity by a fixed amount (for manual tuning)
+     */
+    public void increaseVelocity(double delta) {
+        if (activeVelocityControl) {
+            setShooterVelocityTicks(targetVelocityTicks + delta);
+        }
+    }
+
+    /**
+     * Decrease target velocity by a fixed amount (for manual tuning)
+     */
+    public void decreaseVelocity(double delta) {
+        if (activeVelocityControl) {
+            setShooterVelocityTicks(Math.max(0, targetVelocityTicks - delta));
+        }
+    }
+
+    /**
+     * Increment hood position for manual adjustment
+     */
+    public void incrementHood(double delta) {
+        double newPosition = getHoodPosition() + delta;
+        setHoodPosition(newPosition);
+    }
+
+    /**
+     * Reset hood to home position
+     */
+    public void resetHood() {
+        setHoodPosition(HOOD_MIN_POSITION);
+    }
+
+    /**
+     * Get shooter status for telemetry
+     */
+    public String getShooterStatus() {
+        if (!activeVelocityControl) {
+            return "MANUAL";
+        } else if (isReadyToShoot()) {
+            return "READY";
+        } else {
+            return "SPINNING_UP";
+        }
+    }
+
+    /**
      * Get the current distance to the AprilTag using vision
      */
     public double getTargetDistance() {
@@ -190,31 +260,27 @@ public class Shooter extends SubsystemTemplate {
     private double calculateHoodAngle(double distance) {
         // Handle edge cases
         if (distance <= HOOD_LOOKUP_TABLE[0][0]) {
-            return HOOD_LOOKUP_TABLE[0][1]; // Closest distance
+            return HOOD_LOOKUP_TABLE[0][1];
         }
         if (distance >= HOOD_LOOKUP_TABLE[HOOD_LOOKUP_TABLE.length - 1][0]) {
-            return HOOD_LOOKUP_TABLE[HOOD_LOOKUP_TABLE.length - 1][1]; // Farthest distance
+            return HOOD_LOOKUP_TABLE[HOOD_LOOKUP_TABLE.length - 1][1];
         }
 
-        // Find the two points to interpolate between
+        // Linear interpolation
         for (int i = 0; i < HOOD_LOOKUP_TABLE.length - 1; i++) {
             double dist1 = HOOD_LOOKUP_TABLE[i][0];
             double dist2 = HOOD_LOOKUP_TABLE[i + 1][0];
 
             if (distance >= dist1 && distance <= dist2) {
-                // Linear interpolation between the two points
                 double pos1 = HOOD_LOOKUP_TABLE[i][1];
                 double pos2 = HOOD_LOOKUP_TABLE[i + 1][1];
-
                 double t = (distance - dist1) / (dist2 - dist1);
                 return pos1 + t * (pos2 - pos1);
             }
         }
 
-        // Fallback (should never reach here)
         return HOOD_MIN_POSITION;
-                    }
-
+    }
     /**
      * Automatically adjust hood angle based on AprilTag distance
      */
@@ -227,6 +293,42 @@ public class Shooter extends SubsystemTemplate {
 
             telemetry.addData("Target Distance", "%.1f inches", distance);
             telemetry.addData("Hood Position", "%.2f", hoodPosition);
+
+            return true;
+        } else {
+            telemetry.addData("Auto Aim", "No target detected");
+            return false;
+        }
+    }
+
+    /**
+     * Emergency stop - immediately stop shooter
+     */
+    public void emergencyStop() {
+        activeVelocityControl = false;
+        shooterMotor1.setPower(0);
+        shooterMotor2.setPower(0);
+        telemetry.addData("EMERGENCY STOP", "Shooter halted");
+    }
+
+
+    /**
+     * Automatically aim both hood and velocity based on AprilTag distance
+     */
+    public boolean autoAim() {
+        double distance = getTargetDistance();
+
+        if (distance > 0) {
+            // Adjust hood
+            double hoodPosition = calculateHoodAngle(distance);
+            setHoodPosition(hoodPosition);
+
+            // Adjust velocity
+            setShooterVelocityForDistance(distance);
+
+            telemetry.addData("Auto Aim", "Active");
+            telemetry.addData("Target Distance", "%.1f inches", distance);
+            telemetry.addData("Target Velocity", "%.0f ticks/sec", targetVelocityTicks);
 
             return true;
         } else {
@@ -283,9 +385,6 @@ public class Shooter extends SubsystemTemplate {
         shooterMotor2.setPower(output);
     }
 
-
-
-
     /**
      * Get current hood position
      */
@@ -294,8 +393,36 @@ public class Shooter extends SubsystemTemplate {
     }
 
     private void updateTelemetry() {
-        telemetry.addData("Shooter Velocity", "%.0f ticks/sec", getShooterVelocity());
-        telemetry.addData("Hood Position", "%.2f", getHoodPosition());
-        telemetry.addData("Target Distance", "%.1f inches", getTargetDistance());
+        telemetry.addData("=== SHOOTER ===", "");
+        telemetry.addData("Status", getShooterStatus());
+        telemetry.addData("Current Velocity", "%.0f ticks/sec", getShooterVelocity());
+
+        if (activeVelocityControl) {
+            telemetry.addData("Target Velocity", "%.0f ticks/sec", targetVelocityTicks);
+            telemetry.addData("Velocity Error", "%.0f ticks/sec",
+                    targetVelocityTicks - getShooterVelocity());
+        }
+
+        telemetry.addData("Hood Position", "%.3f", getHoodPosition());
+
+        double distance = getTargetDistance();
+        if (distance > 0) {
+            telemetry.addData("Target Distance", "%.1f inches", distance);
+        } else {
+            telemetry.addData("Target Distance", "NO TARGET");
+        }
+
+        telemetry.addData("Motor 1 Velocity", "%.0f", shooterMotor1.getVelocity());
+        telemetry.addData("Motor 2 Velocity", "%.0f", shooterMotor2.getVelocity());
+    }
+
+    /**
+     * Update PIDF gains dynamically (for tuning)
+     */
+    public void updatePIDFGains(double p, double i, double d, double f) {
+        shooterController.setP(p);
+        shooterController.setI(i);
+        shooterController.setD(d);
+        shooterController.setF(f);
     }
 }
