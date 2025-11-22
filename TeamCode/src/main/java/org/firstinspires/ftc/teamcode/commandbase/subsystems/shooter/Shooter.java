@@ -5,6 +5,8 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shoo
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
+import com.seattlesolvers.solverslib.controller.PIDFController;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
@@ -14,6 +16,7 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Shooter extends SubsystemTemplate {
 
@@ -24,10 +27,27 @@ public class Shooter extends SubsystemTemplate {
     private Telemetry telemetry;
     private ATVision vision;
 
+    // Empirically determined flywheel velocities at various distances
+    // TODO: Fill these in after testing! Format: {distance_in_inches, flywheel ticks/sec}
+    private final InterpolatingLUT VELOCITY_LOOKUP_TABLE = new InterpolatingLUT(
+            Arrays.asList(10.0,   14.0,   18.0,   22.0,   26.0,   30.0,   34.0,   38.0,   42.0), // distance in inches (example)
+            Arrays.asList(1200.0, 1320.0, 1450.0, 1580.0, 1700.0, 1830.0, 1950.0, 2075.0, 2200.0)  // flywheel ticks/sec
+    );
+
+
+    private PIDFController shooterController = new PIDFController(SHOOTER_PIDF_COEFFICIENTS);
+    private boolean activeVelocityControl = false;
+    private double targetVelocityTicks = 0.0;
+
     private static final Shooter INSTANCE = new Shooter();
 
     public static Shooter getInstance() {
         return INSTANCE;
+    }
+
+    private Shooter() {
+        VELOCITY_LOOKUP_TABLE.createLUT();
+        shooterController.setTolerance(SHOOTER_VEL_TOLERANCE);
     }
 
     @Override
@@ -94,12 +114,17 @@ public class Shooter extends SubsystemTemplate {
         // Initialize hood servo
         hoodServo = map.HOOD;
         hoodServo.setPosition(HOOD_MIN_POSITION);
+
+        // Make sure velocity control is off on init
+        activeVelocityControl = false;
+        targetVelocityTicks = 0.0;
     }
 
     /**
      * Set shooter motors to a specific power
      */
     public void setShooterPower(double power) {
+        activeVelocityControl = false; // turn off closed-loop
         power = Math.max(0.0, Math.min(1.0, power)); // Clamp between 0 and 1
         shooterMotor1.setPower(power);
         shooterMotor2.setPower(power);
@@ -144,6 +169,21 @@ public class Shooter extends SubsystemTemplate {
     }
 
     /**
+     * Get current shooter velocity (average of both motors) in ticks/sec.
+     */
+    public double getShooterVelocity() {
+        return (shooterMotor1.getVelocity() + shooterMotor2.getVelocity()) / 2.0;
+    }
+
+    /**
+     * Check if shooter is at target velocity (absolute error < tolerance).
+     */
+    public boolean isAtSpeed(double targetVelocity, double tolerance) {
+        double currentVelocity = getShooterVelocity();
+        return Math.abs(currentVelocity - targetVelocity) < tolerance;
+    }
+
+    /**
      * Calculate the ideal hood position based on distance using linear interpolation
      * This uses an empirically-determined lookup table
      */
@@ -173,7 +213,7 @@ public class Shooter extends SubsystemTemplate {
 
         // Fallback (should never reach here)
         return HOOD_MIN_POSITION;
-    }
+                    }
 
     /**
      * Automatically adjust hood angle based on AprilTag distance
@@ -196,19 +236,55 @@ public class Shooter extends SubsystemTemplate {
     }
 
     /**
-     * Get current shooter velocity (average of both motors) - ticks per second
+     * Set shooter velocity directly in ticks/sec and enable closed-loop PIDF.
      */
-    public double getShooterVelocity() {
-        return (shooterMotor1.getVelocity() + shooterMotor2.getVelocity()) / 2.0;
+    public void setShooterVelocityTicks(double velTicksPerSec) {
+        targetVelocityTicks = velTicksPerSec;
+        shooterController.setSetPoint(velTicksPerSec);
+        activeVelocityControl = true;
     }
 
     /**
-     * Check if shooter is at target velocity
+     * Get desired flywheel velocity (ticks/sec) for a given distance (inches) using LUT.
      */
-    public boolean isAtSpeed(double targetVelocity, double tolerance) {
-        double currentVelocity = getShooterVelocity();
-        return Math.abs(currentVelocity - targetVelocity) < tolerance; // acceptable error margin
+    private double getTargetVelocityForDistance(double distanceInches) {
+        // You can clamp if you want to enforce min/max distances
+        return VELOCITY_LOOKUP_TABLE.get(distanceInches);
     }
+
+    /**
+     * Set shooter velocity based on distance (inches) using LUT.
+     */
+    public void setShooterVelocityForDistance(double distanceInches) {
+        double vel = getTargetVelocityForDistance(distanceInches);
+        vel = Range.clip(vel, 0.0, SHOOTER_MAX_VELOCITY);  // SHOOTER_MAX_VELOCITY in constants
+        setShooterVelocityTicks(vel);
+    }
+
+    /**
+     * Update flywheel closed-loop control each cycle.
+     */
+    private void updateVelocityControl() {
+        if (!activeVelocityControl) {
+            return;
+        }
+
+        // voltage compensation if i find a way to read it
+        // double voltage = Enigma.getInstance().getVoltage();
+        // flywheelController.setF(SHOOTER_PIDF_COEFFICIENTS.f / (voltage / 12.0));
+
+        double currentVel = getShooterVelocity();
+        double output = shooterController.calculate(currentVel);
+
+        // Cap the output to [-1, 1] just in case
+        output = Range.clip(output, -1.0, 1.0);
+
+        shooterMotor1.setPower(output);
+        shooterMotor2.setPower(output);
+    }
+
+
+
 
     /**
      * Get current hood position

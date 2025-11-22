@@ -46,7 +46,7 @@ public class DriveSubsystem extends SubsystemTemplate {
         startTeleopDrive(true);
 
         // Set default teleop mode
-        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
+        currentMode = DriveMode.TELEOP_FIELD_CENTRIC;
 
         // Reset slow mode to default
         slowModeEnabled = false;
@@ -80,7 +80,6 @@ public class DriveSubsystem extends SubsystemTemplate {
 
     @Override
     public void onTestInit() {
-        startTeleopDrive(true);
         currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
         slowModeEnabled = false;
         disableHeadingLock();
@@ -529,6 +528,7 @@ public class DriveSubsystem extends SubsystemTemplate {
 
         Log.i("Drive", "Reset complete");
     }
+
 
     @Override
     public void periodic() {
