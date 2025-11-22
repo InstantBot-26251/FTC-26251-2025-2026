@@ -1,17 +1,22 @@
-package org.firstinspires.ftc.teamcode.robot;
+package org.firstinspires.ftc.teamcode.globals;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.pedropathing.geometry.Pose;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveConstants.*;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.subsystems.TRIkicker.KickerSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.drive.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.util.Alliance;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Enigma {
+    public Alliance alliance;
 
     private static Enigma INSTANCE;
 
@@ -19,8 +24,9 @@ public class Enigma {
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
 
+    private LynxModule hub;
+
     // Subsystems
-    private KickerSubsystem kickerSubsystem;
     private DriveSubsystem driveSubsystem;
 
     // List to track all subsystems for periodic updates
@@ -44,15 +50,16 @@ public class Enigma {
     /**
      * Initialize the robot with hardware map and telemetry
      */
-    public void init(HardwareMap hardwareMap, Telemetry telemetry) {
+    public void init(HardwareMap hardwareMap, Alliance alliance) {
         this.hardwareMap = hardwareMap;
-        this.telemetry = telemetry;
+
 
         // Initialize subsystems
         initSubsystems();
 
-        telemetry.addData("Robot", "Initialized");
-        telemetry.update();
+        hub = hardwareMap.getAll(LynxModule.class).get(0);
+        hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+
     }
 
     /**
@@ -60,10 +67,6 @@ public class Enigma {
      */
     private void initSubsystems() {
         subsystems.clear();
-
-        // Initialize kicker subsystem
-        kickerSubsystem = new KickerSubsystem();
-        subsystems.add(kickerSubsystem);
 
         driveSubsystem = new DriveSubsystem();
         subsystems.add(driveSubsystem);
@@ -78,23 +81,19 @@ public class Enigma {
         }
     }
 
-    /**
-     * Reset the robot - use when switching between auto and teleop
-     */
-    public void reset() {
-        // Reset kicker subsystem
-        if (kickerSubsystem != null) {
-            kickerSubsystem.reset();
-        }
+    //------------------------SETTERS------------------------//
 
-        telemetry.addData("Robot", "Reset");
+    public void setShootHeading() {
+        if (alliance == Alliance.BLUE) {
+            shootHeadingCLOSE = Math.toRadians(135); // TODO: tune
+            shootHeadingFAR = Math.toRadians(120); //  TODO: tune
+        }
+        else if (alliance == Alliance.RED)
+            shootHeadingCLOSE = Math.toRadians(135); // TODO: tune
+        shootHeadingFAR = Math.toRadians(120); //  TODO: tune
     }
 
     //------------------------GETTERS------------------------//
-
-    public KickerSubsystem getKickerSubsystem() {
-        return kickerSubsystem;
-    }
 
     public DriveSubsystem getDriveSubsystem() {
         return driveSubsystem;

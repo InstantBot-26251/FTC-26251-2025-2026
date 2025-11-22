@@ -1,17 +1,114 @@
-package org.firstinspires.ftc.teamcode.subsystems.drive;
+package org.firstinspires.ftc.teamcode.commandbase.subsystems.drive;
 
 import android.util.Log;
 
+import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveConstants.*;
+
+
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
+
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
-import org.firstinspires.ftc.teamcode.robot.Enigma;
+import org.firstinspires.ftc.teamcode.globals.Enigma;
+import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
-public class DriveSubsystem extends SubsystemBase {
+public class DriveSubsystem extends SubsystemTemplate {
+
+    private static final DriveSubsystem INSTANCE = new DriveSubsystem();
+
+    public static DriveSubsystem getInstance() {
+        return INSTANCE;
+    }
 
     private Follower follower;
+
+    @Override
+    public void onAutonomousInit() {
+        currentMode = DriveMode.AUTONOMOUS;
+        automatedDrive = false;
+        slowModeEnabled = false;
+        disableHeadingLock();
+
+        // Note: Starting pose should be set by the autonomous OpMode
+        // before paths are followed
+
+        Log.i("Drive", "Autonomous initialized - ready for path following");
+    }
+
+    @Override
+    public void onTeleopInit() {
+        // Start teleop drive mode with brake mode enabled
+        startTeleopDrive(true);
+
+        // Set default teleop mode
+        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
+
+        // Reset slow mode to default
+        slowModeEnabled = false;
+        slowModeMultiplier = 0.5;
+
+        // Disable heading lock from autonomous
+        disableHeadingLock();
+
+        // Ensure no automated paths are running
+        if (automatedDrive) {
+            breakFollowing();
+        }
+
+        Log.i("Drive", "Teleop initialized - manual control enabled");
+    }
+
+    @Override
+    public void onTeleopPeriodic() {
+
+    }
+
+    @Override
+    public void onAutonomousPeriodic() {
+
+    }
+
+    @Override
+    public void onTestPeriodic() {
+
+    }
+
+    @Override
+    public void onTestInit() {
+        startTeleopDrive(true);
+        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
+        slowModeEnabled = false;
+        disableHeadingLock();
+
+        // Reset pose to origin for testing
+        setStartingPose(0, 0, 0);
+
+        Log.i("Drive", "Test mode initialized - ready for tuning and testing");
+    }
+
+    @Override
+    public void onDisable() {
+        // Stop all drive activity when robot is disabled
+
+        // Break any following paths
+        if (automatedDrive) {
+            breakFollowing();
+        }
+
+        // Disable heading lock
+        disableHeadingLock();
+
+        // Reset state flags
+        automatedDrive = false;
+        slowModeEnabled = false;
+
+        Log.i("Drive", "Drive subsystem disabled - all motion stopped");
+    }
 
     // Drive mode tracking
     public enum DriveMode {
@@ -29,12 +126,20 @@ public class DriveSubsystem extends SubsystemBase {
     // Track if we're following an automated path in teleop
     private boolean automatedDrive = false;
 
+    private boolean headingLockEnabled = false;
+    private double targetHeading = 0.0; // Target heading in radians
+    private PIDFController headingPID;
+
+
     public DriveSubsystem() {
         // This is the official Pedro 2.0.4 initialization method
         follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
 
         // Set default starting pose
         follower.setStartingPose(new Pose(0, 0, 0));
+
+        // Initialize PIDF Controller
+        headingPID = new PIDFController(new PIDFCoefficients(HEADING_kP, HEADING_kI, HEADING_kD, HEADING_kF));
 
         Log.i("Drive", "DriveSubsystem initialized with Pedro Pathing 2.0.4");
     }
@@ -83,7 +188,137 @@ public class DriveSubsystem extends SubsystemBase {
         setTeleOpDrive(forwardSpeed, strafeSpeed, turnSpeed, true);
     }
 
-    //------------------------PEDRO PATHING AUTONOMOUS------------------------//
+    //------------------------HEADING LOCK------------------------//
+
+    /**
+     * Lock the current heading - robot will maintain this heading until disengaged
+     */
+    public void lockCurrentHeading() {
+        targetHeading = getPose().getHeading();
+        headingLockEnabled = true;
+        headingPID.reset();
+        headingPID.setTargetPosition(targetHeading);
+        Log.i("Drive", "Heading locked at: " + Math.toDegrees(targetHeading) + " degrees");
+    }
+
+    /**
+     * Lock to a specific heading in radians
+     */
+    public void lockHeading(double headingRadians) {
+        targetHeading = normalizeAngle(headingRadians);
+        headingLockEnabled = true;
+        headingPID.reset();
+        headingPID.setTargetPosition(targetHeading);
+        Log.i("Drive", "Heading locked to: " + Math.toDegrees(targetHeading) + " degrees");
+    }
+
+    /**
+     * Lock to a specific heading in degrees
+     */
+    public void lockHeadingDegrees(double headingDegrees) {
+        lockHeading(Math.toRadians(headingDegrees));
+    }
+
+    /**
+     * Lock to cardinal directions (0, 90, 180, 270 degrees)
+     */
+    public void lockToCardinal() {
+        double currentHeadingDegrees = Math.toDegrees(getPose().getHeading());
+
+        // Find nearest cardinal direction
+        double nearest = Math.round(currentHeadingDegrees / 90.0) * 90.0;
+        lockHeadingDegrees(nearest);
+
+        Log.i("Drive", "Locked to nearest cardinal: " + nearest + " degrees");
+    }
+
+    /*
+    * Auto Aim CLOSE
+    */
+    public void autoAimHeadingCLOSE() {
+        lockHeading(shootHeadingCLOSE); // TODO: check if shootHeadingCLOSE is in radians or degrees
+
+        Log.i("Drive", "Locked to close shooting heading: " + shootHeadingCLOSE + " degrees");
+    }
+
+    /*
+     * Auto Aim FAR
+     */
+    public void autoAimHeadingFAR() {
+        lockHeading(shootHeadingCLOSE); // TODO: check if shootHeadingFAR is in radians or degrees
+
+        Log.i("Drive", "Locked to far shooting heading: " + shootHeadingFAR + " degrees");
+    }
+
+
+    /**
+     * Disable heading lock
+     */
+    public void disableHeadingLock() {
+        headingLockEnabled = false;
+        headingPID.reset();
+        Log.i("Drive", "Heading lock disabled");
+    }
+
+    /**
+     * Toggle heading lock on/off
+     * If turning on, locks to current heading
+     */
+    public void toggleHeadingLock() {
+        if (headingLockEnabled) {
+            disableHeadingLock();
+        } else {
+            lockCurrentHeading();
+        }
+    }
+
+    /**
+     * Check if heading lock is enabled
+     */
+    public boolean isHeadingLockEnabled() {
+        return headingLockEnabled;
+    }
+
+    /**
+     * Get the target locked heading in radians
+     */
+    public double getTargetHeading() {
+        return targetHeading;
+    }
+
+    /**
+     * Get the heading error in radians (how far from target)
+     */
+    public double getHeadingError() {
+        return normalizeAngle(targetHeading - getPose().getHeading());
+    }
+
+    /**
+     * Check if robot is at target heading (within tolerance)
+     */
+    public boolean isAtTargetHeading() {
+        return headingLockEnabled && Math.abs(headingError) < HEADING_TOLERANCE;
+    }
+
+    /**
+     * Update heading PID constants for tuning
+     */
+    public void setHeadingPID(double kP, double kI, double kD) {
+        headingPID.setCoefficients(new PIDFCoefficients(kP, kI, kD, HEADING_kF));
+        Log.i("Drive", String.format("Heading PID updated: kP=%.3f, kI=%.3f, kD=%.3f", kP, kI, kD));
+    }
+
+    /**
+     * Normalize angle to [-PI, PI] range
+     */
+    private double normalizeAngle(double angleRadians) {
+        while (angleRadians > Math.PI) angleRadians -= 2 * Math.PI;
+        while (angleRadians < -Math.PI) angleRadians += 2 * Math.PI;
+        return angleRadians;
+    }
+
+
+    //------------------------AUTONOMOUS------------------------//
 
     public void followPath(com.pedropathing.paths.Path path, boolean holdEnd) {
         if (follower != null) {
@@ -301,6 +536,27 @@ public class DriveSubsystem extends SubsystemBase {
         if (follower != null) {
             follower.update();
         }
+
+        // Update heading lock PID if enabled
+        if (headingLockEnabled) {
+            // Update PID coefficients from FTC Dashboard
+            headingPID.setCoefficients(new PIDFCoefficients(HEADING_kP, HEADING_kI, HEADING_kD, HEADING_kF));
+
+            // Calculate error
+            double currentHeading = getPose().getHeading();
+            headingError = normalizeAngle(targetHeading - currentHeading);
+
+            // Update PID and get output
+            headingPID.updateError(headingError);
+            headingPower = headingPID.run();
+
+            // Clamp power to reasonable range
+            headingPower = Math.max(-0.5, Math.min(0.5, headingPower));
+        } else {
+            headingError = 0.0;
+            headingPower = 0.0;
+        }
+
 
         // If in teleop and automated path is done, return to manual control
         if (currentMode != DriveMode.AUTONOMOUS && automatedDrive && !follower.isBusy()) {
