@@ -417,7 +417,7 @@ public class Shooter extends SubsystemTemplate {
     }
 
     /**
-     * Update PIDF gains dynamically (for tuning)
+     * Update PIDF gains dynamically - for tuning
      */
     public void updatePIDFGains(double p, double i, double d, double f) {
         shooterController.setP(p);
