@@ -1,15 +1,12 @@
 package org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter;
 
-import com.seattlesolvers.solverslib.util.InterpLUT;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * A lookup table that uses monotone cubic spline interpolation to compute
- * smooth values between discrete control points.
- * Courtesy of Claude Sonnet 4.1
+ * Performs spline interpolation given a set of control points.
+ *
  */
 public class InterpolatingLUT {
 
@@ -17,52 +14,37 @@ public class InterpolatingLUT {
     private List<Double> mY = new ArrayList<>();
     private List<Double> mM = new ArrayList<>();
 
+    private InterpolatingLUT(List<Double> x, List<Double> y, List<Double> m) {
+        mX = x;
+        mY = y;
+        mM = m;
+    }
 
-    private final List<Double> inputValues;
-    private final List<Double> outputValues;
-    private final List<Double> tangents;
+    public InterpolatingLUT(List<Double> input, List<Double> output) {
+        if (input == null || output == null || input.size() != output.size() || input.size() < 2) {
+            throw new IllegalArgumentException("There must be at least two control "
+                    + "points and the arrays must be of equal length.");
+        }
 
-    /**
-     * Constructs an empty interpolating lookup table.
-     * Use add() to insert control points, then call build() to prepare for queries.
-     */
+        for (int i = 0; i < input.size(); i++) {
+            mX.add(input.get(i));
+            mY.add(output.get(i));
+        }
+    }
+
     public InterpolatingLUT() {
-        this.inputValues = new ArrayList<>();
-        this.outputValues = new ArrayList<>();
-        this.tangents = new ArrayList<>();
     }
 
     /**
-     * Constructs a lookup table from parallel lists of inputs and outputs.
-     * The table is immediately ready for use.
-     */
-    public InterpolatingLUT(List<Double> inputs, List<Double> outputs) {
-        validateControlPoints(inputs, outputs);
-
-        this.inputValues = new ArrayList<>(inputs);
-        this.outputValues = new ArrayList<>(outputs);
-        this.tangents = new ArrayList<>();
-
-        computeSplineCoefficients();
-    }
-
-    /**
-     * Adds a data point to the lookup table.
-     * Call build() after adding all points to prepare the spline.
+     * Adds a control point to the LUT
+     * @param input the input value (x)
+     * @param output the output value (y)
+     * @return this class (for chaining calls)
      */
     public InterpolatingLUT add(double input, double output) {
-        inputValues.add(input);
-        outputValues.add(output);
-        return this;
-    }
+        mX.add(input);
+        mY.add(output);
 
-    /**
-     * Finalizes the lookup table by computing spline interpolation coefficients.
-     * This must be called after adding control points and before querying values.
-     */
-    public InterpolatingLUT build() {
-        validateControlPoints(inputValues, outputValues);
-        computeSplineCoefficients();
         return this;
     }
 
@@ -132,135 +114,57 @@ public class InterpolatingLUT {
     }
 
     /**
-     * Retrieves the interpolated output value for a given input.
-     * Throws an exception if the input is outside the defined range.
+     * Interpolates the value of Y = f(X) for given X. Clamps X to the domain of the spline.
+     *
+     * @param input The X value.
+     * @return The interpolated Y = f(X) value.
      */
     public double get(double input) {
+        // Handle the boundary cases.
+        final int n = mX.size();
         if (Double.isNaN(input)) {
             return input;
         }
-
-        int size = inputValues.size();
-        double minInput = inputValues.get(0);
-        double maxInput = inputValues.get(size - 1);
-
-        if (input < minInput || input > maxInput) {
-            throw new IllegalArgumentException(
-                    String.format("Input %.3f is outside valid range [%.3f, %.3f]",
-                            input, minInput, maxInput));
+        if (input <= mX.get(0)) {
+            throw new IllegalArgumentException("User requested value outside of bounds of LUT. Bounds are: " + mX.get(0).toString() + " to " + mX.get(n - 1).toString() + ". Value provided was: " + input);
+        }
+        if (input >= mX.get(n - 1)) {
+            throw new IllegalArgumentException("User requested value outside of bounds of LUT. Bounds are: " + mX.get(0).toString() + " to " + mX.get(n - 1).toString() + ". Value provided was: " + input);
         }
 
-        // Find the segment containing this input value
-        int segmentIndex = locateSegment(input);
-
-        // Check for exact match
-        if (input == inputValues.get(segmentIndex)) {
-            return outputValues.get(segmentIndex);
-        }
-
-        // Perform Hermite interpolation
-        return evaluateHermiteSpline(segmentIndex, input);
-    }
-
-    private void validateControlPoints(List<Double> inputs, List<Double> outputs) {
-        if (inputs == null || outputs == null) {
-            throw new IllegalArgumentException("Control point lists cannot be null");
-        }
-        if (inputs.size() != outputs.size()) {
-            throw new IllegalArgumentException("Input and output lists must have equal length");
-        }
-        if (inputs.size() < 2) {
-            throw new IllegalArgumentException("At least two control points are required");
-        }
-    }
-
-    private void computeSplineCoefficients() {
-        int numPoints = inputValues.size();
-        Double[] secantSlopes = new Double[numPoints - 1];
-        Double[] computedTangents = new Double[numPoints];
-
-        // Calculate slopes between consecutive points
-        for (int i = 0; i < numPoints - 1; i++) {
-            double deltaX = inputValues.get(i + 1) - inputValues.get(i);
-            if (deltaX <= 0.0) {
-                throw new IllegalArgumentException(
-                        "Input values must be in strictly increasing order");
-            }
-            double deltaY = outputValues.get(i + 1) - outputValues.get(i);
-            secantSlopes[i] = deltaY / deltaX;
-        }
-
-        // Initialize tangents at each point
-        computedTangents[0] = secantSlopes[0];
-        for (int i = 1; i < numPoints - 1; i++) {
-            computedTangents[i] = (secantSlopes[i - 1] + secantSlopes[i]) * 0.5;
-        }
-        computedTangents[numPoints - 1] = secantSlopes[numPoints - 2];
-
-        // Adjust tangents to maintain monotonicity
-        for (int i = 0; i < numPoints - 1; i++) {
-            if (Math.abs(secantSlopes[i]) < 1e-10) {
-                // Flat segment - zero out tangents
-                computedTangents[i] = 0.0;
-                computedTangents[i + 1] = 0.0;
-            } else {
-                double alpha = computedTangents[i] / secantSlopes[i];
-                double beta = computedTangents[i + 1] / secantSlopes[i];
-                double magnitude = Math.sqrt(alpha * alpha + beta * beta);
-
-                if (magnitude > 9.0) {
-                    double scaleFactor = 3.0 / magnitude;
-                    computedTangents[i] = scaleFactor * alpha * secantSlopes[i];
-                    computedTangents[i + 1] = scaleFactor * beta * secantSlopes[i];
-                }
+        // Find the index 'i' of the last point with smaller X.
+        // We know this will be within the spline due to the boundary tests.
+        int i = 0;
+        while (input >= mX.get(i + 1)) {
+            i += 1;
+            if (input == mX.get(i)) {
+                return mY.get(i);
             }
         }
 
-        tangents.clear();
-        for (Double tangent : computedTangents) {
-            tangents.add(tangent);
-        }
+        // Perform cubic Hermite spline interpolation.
+        double h = mX.get(i + 1) - mX.get(i);
+        double t = (input - mX.get(i)) / h;
+        return (mY.get(i) * (1 + 2 * t) + h * mM.get(i) * t) * (1 - t) * (1 - t)
+                + (mY.get(i + 1) * (3 - 2 * t) + h * mM.get(i + 1) * (t - 1)) * t * t;
     }
 
-    private int locateSegment(double input) {
-        int index = 0;
-        while (index < inputValues.size() - 1 && input >= inputValues.get(index + 1)) {
-            index++;
-        }
-        return index;
-    }
-
-    private double evaluateHermiteSpline(int index, double input) {
-        double x0 = inputValues.get(index);
-        double x1 = inputValues.get(index + 1);
-        double y0 = outputValues.get(index);
-        double y1 = outputValues.get(index + 1);
-        double m0 = tangents.get(index);
-        double m1 = tangents.get(index + 1);
-
-        double intervalWidth = x1 - x0;
-        double normalizedPos = (input - x0) / intervalWidth;
-        double t2 = normalizedPos * normalizedPos;
-        double t3 = t2 * normalizedPos;
-
-        // Hermite basis functions
-        double h00 = 2 * t3 - 3 * t2 + 1;
-        double h10 = t3 - 2 * t2 + normalizedPos;
-        double h01 = -2 * t3 + 3 * t2;
-        double h11 = t3 - t2;
-
-        return h00 * y0 + h10 * intervalWidth * m0 + h01 * y1 + h11 * intervalWidth * m1;
-    }
-
+    // For debugging.
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder("InterpolatingLUT[");
-        for (int i = 0; i < inputValues.size(); i++) {
-            if (i > 0) result.append(", ");
-            result.append(String.format("(%.2f → %.2f, m=%.2f)",
-                    inputValues.get(i), outputValues.get(i), tangents.get(i)));
+        StringBuilder str = new StringBuilder();
+        final int n = mX.size();
+        str.append("[");
+        for (int i = 0; i < n; i++) {
+            if (i != 0) {
+                str.append(", ");
+            }
+            str.append("(").append(mX.get(i));
+            str.append(", ").append(mY.get(i));
+            str.append(": ").append(mM.get(i)).append(")");
         }
-        result.append("]");
-        return result.toString();
+        str.append("]");
+        return str.toString();
     }
+
 }

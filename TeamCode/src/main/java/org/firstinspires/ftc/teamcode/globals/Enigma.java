@@ -30,6 +30,8 @@ import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
+import kotlin.time.Instant;
+
 public class Enigma extends Robot {
     public Alliance alliance;
 
@@ -115,6 +117,7 @@ public class Enigma extends Robot {
 
         subsystems.forEach(SubsystemTemplate::onTeleopInit);
 
+        // Driver Controls
         Drive.getInstance().setDefaultCommand(new TeleopDriveCommand(
                 () -> applyResponseCurve(driveController.getLeftY(), DRIVE_SENSITIVITY),
                 () -> -applyResponseCurve(driveController.getLeftX(), DRIVE_SENSITIVITY),
@@ -134,15 +137,27 @@ public class Enigma extends Robot {
         driveController.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(Drive.getInstance()::lockCurrentHeading);
 
-        manipController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(Intake.ActiveStopIntake());
-
-        manipController.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(Shooter.getInstance()::autoAim);
+        // Manipulator Controls
+        manipController.getGamepadButton(GamepadKeys.Button.A).whenPressed(
+                new InstantCommand(() -> Intake.ActiveStopIntake())
+                );
 
         manipController.getGamepadButton(GamepadKeys.Button.X).whileActiveContinuous(
             new InstantCommand(() -> intake.setIntake(MotorState.REVERSE))
         );
+
+        manipController.getGamepadButton(GamepadKeys.Button.X).whenReleased(
+                new InstantCommand(() -> intake.setIntake(MotorState.FORWARD))
+        );
+
+        manipController.getGamepadButton(GamepadKeys.Button.Y).whenPressed(
+                new InstantCommand(() -> intake.setIntake(MotorState.TRANSFER))
+        );
+
+        manipController.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenPressed(
+                new InstantCommand(() -> shooter.autoAim())
+        );
+
 
     }
 
