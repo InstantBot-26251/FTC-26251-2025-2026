@@ -20,6 +20,8 @@ import java.util.Arrays;
 
 public class Shooter extends SubsystemTemplate {
 
+    private Enigma robot = Enigma.getInstance();
+
     private DcMotorEx shooterMotor1;
     private DcMotorEx shooterMotor2;
     private Servo hoodServo;
@@ -34,10 +36,10 @@ public class Shooter extends SubsystemTemplate {
             Arrays.asList(1200.0, 1320.0, 1450.0, 1580.0, 1700.0, 1830.0, 1950.0, 2075.0, 2200.0)  // flywheel ticks/sec
     );
 
-
     private PIDFController shooterController = new PIDFController(SHOOTER_PIDF_COEFFICIENTS);
     private boolean activeVelocityControl = false;
     private double targetVelocityTicks = 0.0;
+    private boolean activeControl = false;
 
     private static final Shooter INSTANCE = new Shooter();
 
@@ -45,10 +47,11 @@ public class Shooter extends SubsystemTemplate {
         return INSTANCE;
     }
 
-    private Shooter() {
+    public Shooter() {
         VELOCITY_LOOKUP_TABLE.createLUT();
         shooterController.setTolerance(SHOOTER_VEL_TOLERANCE);
     }
+
 
     @Override
     public void onAutonomousInit() {
@@ -65,44 +68,9 @@ public class Shooter extends SubsystemTemplate {
     }
 
     @Override
-    public void onTestInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
-        vision = ATVision.getInstance();
-        initHardware();
-
-        telemetry.addData("TEST MODE", "Shooter subsystem initialized");
-        telemetry.addData("Instructions", "Use gamepad to test shooter");
-    }
-
-    @Override
-    public void onAutonomousPeriodic() {
+    public void periodic() {
         updateVelocityControl();
         updateTelemetry();
-    }
-
-    @Override
-    public void onTeleopPeriodic() {
-        updateVelocityControl();
-        updateTelemetry();
-    }
-
-    @Override
-    public void onTestPeriodic() {
-        updateVelocityControl();
-        updateTelemetry();
-
-        // Add diagnostic info in test mode
-        telemetry.addData("=== DIAGNOSTICS ===", "");
-        telemetry.addData("Motor 1 Power", "%.2f", shooterMotor1.getPower());
-        telemetry.addData("Motor 2 Power", "%.2f", shooterMotor2.getPower());
-        telemetry.addData("Velocity Control Active", activeVelocityControl);
-        telemetry.addData("PIDF at SetPoint", shooterController.atSetPoint());
-    }
-
-    @Override
-    public void onDisable() {
-        stopShooter();
-        setHoodPosition(HOOD_MIN_POSITION);
     }
 
     private void initHardware() {
@@ -131,6 +99,12 @@ public class Shooter extends SubsystemTemplate {
         // Make sure velocity control is off on init
         activeVelocityControl = false;
         targetVelocityTicks = 0.0;
+    }
+
+    public void setShooter(double vel, boolean setActiveControl) {
+        shooterController.setSetPoint(Math.min(VELOCITY_LOOKUP_TABLE.get(vel), SHOOTER_MAX_VELOCITY));
+        targetVelocityTicks = vel;
+        activeControl = setActiveControl;
     }
 
     /**

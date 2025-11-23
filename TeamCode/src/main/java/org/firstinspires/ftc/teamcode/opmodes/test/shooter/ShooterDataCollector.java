@@ -250,7 +250,6 @@ public class ShooterDataCollector extends OpMode {
     @Override
     public void stop() {
         shooter.stopShooter();
-        shooter.onDisable();
     }
 
     /**

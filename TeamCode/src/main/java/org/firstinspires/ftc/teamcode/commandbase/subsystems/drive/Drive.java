@@ -9,19 +9,17 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
+import com.pedropathing.math.MathFunctions;
 
-import com.seattlesolvers.solverslib.command.SubsystemBase;
-
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
-public class DriveSubsystem extends SubsystemTemplate {
+public class Drive extends SubsystemTemplate {
 
-    private static final DriveSubsystem INSTANCE = new DriveSubsystem();
+    private static final Drive INSTANCE = new Drive();
 
-    public static DriveSubsystem getInstance() {
+    public static Drive getInstance() {
         return INSTANCE;
     }
 
@@ -63,51 +61,7 @@ public class DriveSubsystem extends SubsystemTemplate {
         Log.i("Drive", "Teleop initialized - manual control enabled");
     }
 
-    @Override
-    public void onTeleopPeriodic() {
 
-    }
-
-    @Override
-    public void onAutonomousPeriodic() {
-
-    }
-
-    @Override
-    public void onTestPeriodic() {
-
-    }
-
-    @Override
-    public void onTestInit() {
-        currentMode = DriveMode.TELEOP_ROBOT_CENTRIC;
-        slowModeEnabled = false;
-        disableHeadingLock();
-
-        // Reset pose to origin for testing
-        setStartingPose(0, 0, 0);
-
-        Log.i("Drive", "Test mode initialized - ready for tuning and testing");
-    }
-
-    @Override
-    public void onDisable() {
-        // Stop all drive activity when robot is disabled
-
-        // Break any following paths
-        if (automatedDrive) {
-            breakFollowing();
-        }
-
-        // Disable heading lock
-        disableHeadingLock();
-
-        // Reset state flags
-        automatedDrive = false;
-        slowModeEnabled = false;
-
-        Log.i("Drive", "Drive subsystem disabled - all motion stopped");
-    }
 
     // Drive mode tracking
     public enum DriveMode {
@@ -130,7 +84,7 @@ public class DriveSubsystem extends SubsystemTemplate {
     private PIDFController headingPID;
 
 
-    public DriveSubsystem() {
+    public Drive() {
         // This is the official Pedro 2.0.4 initialization method
         follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
 
@@ -244,7 +198,7 @@ public class DriveSubsystem extends SubsystemTemplate {
      * Auto Aim FAR
      */
     public void autoAimHeadingFAR() {
-        lockHeading(shootHeadingCLOSE); // TODO: check if shootHeadingFAR is in radians or degrees
+        lockHeading(shootHeadingFAR); // TODO: check if shootHeadingFAR is in radians or degrees
 
         Log.i("Drive", "Locked to far shooting heading: " + shootHeadingFAR + " degrees");
     }
@@ -455,16 +409,20 @@ public class DriveSubsystem extends SubsystemTemplate {
     /**
      * Enable or disable slow mode for teleop
      */
-    public void setSlowMode(boolean enabled) {
-        this.slowModeEnabled = enabled;
-        Log.i("Drive", "Slow mode: " + (enabled ? "ON" : "OFF") + " (multiplier: " + slowModeMultiplier + ")");
+    public void enableSlowMode() {
+        slowModeEnabled = true;
+        setSlowModeMultiplier(0.5);
+        Log.i("Drive", "Slow mode: " + "ON" + " (multiplier: " + slowModeMultiplier + ")");
     }
 
     /**
      * Toggle slow mode
      */
-    public void toggleSlowMode() {
-        setSlowMode(!slowModeEnabled);
+    public void disableSlowMode() {
+        slowModeEnabled = false;
+        setSlowModeMultiplier(1.0);
+        Log.i("Drive", "Slow mode: " + "OFF");
+
     }
 
     /**
@@ -478,10 +436,9 @@ public class DriveSubsystem extends SubsystemTemplate {
      * Set slow mode multiplier (0.0 to 1.0)
      */
     public void setSlowModeMultiplier(double multiplier) {
-        this.slowModeMultiplier = Math.max(0.0, Math.min(1.0, multiplier));
+        slowModeMultiplier = MathFunctions.clamp(multiplier, 0d, 1d);
         Log.i("Drive", "Slow mode multiplier set to: " + this.slowModeMultiplier);
     }
-
     /**
      * Get slow mode multiplier
      */
@@ -563,4 +520,5 @@ public class DriveSubsystem extends SubsystemTemplate {
             stopAutomatedDrive();
         }
     }
+
 }

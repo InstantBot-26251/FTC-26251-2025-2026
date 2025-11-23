@@ -160,8 +160,8 @@ public class HoodTuningTest extends LinearOpMode {
             backPressed = gamepad1.back;
 
             // Update subsystems
-            shooter.onTeleopPeriodic();
-            vision.onTeleopPeriodic();
+            shooter.periodic();
+            vision.periodic();
 
             // Display current status
             telemetry.addData("Shooter", shooterRunning ? "RUNNING" : "STOPPED");
@@ -202,8 +202,6 @@ public class HoodTuningTest extends LinearOpMode {
             telemetry.update();
         }
 
-        shooter.onDisable();
-        vision.onDisable();
     }
 
     private void recordShot(boolean success) {

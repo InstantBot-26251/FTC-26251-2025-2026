@@ -44,39 +44,10 @@ public class ATVision extends SubsystemTemplate {
         makeProcessor();
         makePortal();
     }
-    @Override
-    public void onTestInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
-        makeProcessor();
-        makePortal();
-    }
 
     @Override
-    public void onAutonomousPeriodic() {
-        // Vision processing happens automatically
-        // Add telemetry if needed during autonomous
+    public void periodic() {
         updateTelemetry();
-    }
-
-    @Override
-    public void onTeleopPeriodic() {
-        // Vision processing happens automatically
-        // Add telemetry if needed during teleop
-        updateTelemetry();
-    }
-
-    @Override
-    public void onTestPeriodic() {
-        // Vision processing happens automatically
-        updateTelemetry();
-    }
-
-    @Override
-    public void onDisable() {
-        // Clean up vision resources when disabled
-        if (visionPortal != null) {
-            stopStreaming();
-        }
     }
 
     public void makeProcessor() {

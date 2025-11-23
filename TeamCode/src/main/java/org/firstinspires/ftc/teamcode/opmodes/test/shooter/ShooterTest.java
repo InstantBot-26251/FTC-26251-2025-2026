@@ -91,8 +91,8 @@ public class ShooterTest extends LinearOpMode {
             }
 
             // Update periodic methods
-            shooter.onTeleopPeriodic();
-            vision.onTeleopPeriodic();
+            shooter.periodic();
+            vision.periodic();
 
             // Telemetry
             telemetry.addData("Shooter Velocity", "%.0f ticks/sec", shooter.getShooterVelocity());
@@ -105,7 +105,5 @@ public class ShooterTest extends LinearOpMode {
             telemetry.update();
         }
 
-        shooter.onDisable();
-        vision.onDisable();
     }
 }

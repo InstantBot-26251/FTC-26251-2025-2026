@@ -324,7 +324,6 @@ public class ShooterPIDTuner extends OpMode {
     @Override
     public void stop() {
         shooter.stopShooter();
-        shooter.onDisable();
 
         // Print final gains to console
         telemetry.addData("=== FINAL GAINS ===", "");
