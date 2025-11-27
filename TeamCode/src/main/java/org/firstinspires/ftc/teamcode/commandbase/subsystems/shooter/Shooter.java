@@ -231,7 +231,7 @@ public class Shooter extends SubsystemTemplate {
      * Calculate the ideal hood position based on distance using linear interpolation
      * This uses an empirically-determined lookup table
      */
-    private double calculateHoodAngle(double distance) {
+    public double calculateHoodAngle(double distance) {
         // Handle edge cases
         if (distance <= HOOD_LOOKUP_TABLE[0][0]) {
             return HOOD_LOOKUP_TABLE[0][1];
@@ -399,4 +399,6 @@ public class Shooter extends SubsystemTemplate {
         shooterController.setD(d);
         shooterController.setF(f);
     }
+
+
 }

@@ -159,7 +159,7 @@ public class Enigma extends Robot {
                 new InstantCommand(() -> shooter.autoAim())
         );
 
-//        manipController.getGamepadButton(GamepadKeys.Button.TRIANGLE).whenPressed(
+//        manipController.getGamepadButton(GamepadKeys.Button.LEBRON).whenPressed(
 //                new AimCommand().execute()
 //        );
 

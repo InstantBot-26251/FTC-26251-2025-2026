@@ -13,6 +13,7 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commandbase.commands.SetIntake;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
@@ -29,6 +30,12 @@ public class Intake extends SubsystemTemplate {
     public static MotorState motorState = MotorState.STOP;
 
     private int detectionCount = 0;
+
+    private static final Intake INSTANCE = new Intake();
+
+    public static Intake getInstance() {
+        return INSTANCE;
+    }
 
     public Intake() {
         intakeTimer = new ElapsedTime();
