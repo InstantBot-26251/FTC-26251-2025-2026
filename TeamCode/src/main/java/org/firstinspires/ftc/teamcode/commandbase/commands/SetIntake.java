@@ -3,23 +3,23 @@ package org.firstinspires.ftc.teamcode.commandbase.commands;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.MotorState;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 
 public class SetIntake extends CommandBase {
     private final Enigma robot;
-    private final MotorState motorState;
+    private final IntakeState intakeState;
     private boolean waitForArtifacts;
 
     private ElapsedTime timer;
 
-    public SetIntake(MotorState motorState) {
-        this(motorState, false);
+    public SetIntake(IntakeState intakeState) {
+        this(intakeState, false);
     }
 
-    public SetIntake(MotorState motorState, boolean waitForArtifacts) {
+    public SetIntake(IntakeState intakeState, boolean waitForArtifacts) {
         robot = Enigma.getInstance();
-        this.motorState = motorState;
+        this.intakeState = intakeState;
         this.waitForArtifacts = waitForArtifacts;
 
         timer = new ElapsedTime();
@@ -30,7 +30,7 @@ public class SetIntake extends CommandBase {
     @Override
     public void initialize() {
         timer.reset();
-        robot.intake.setIntake(motorState);
+        robot.intake.setIntake(intakeState);
     }
 
     @Override

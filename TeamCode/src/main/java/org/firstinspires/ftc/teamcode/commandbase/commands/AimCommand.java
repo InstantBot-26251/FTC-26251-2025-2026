@@ -9,7 +9,7 @@ import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intake;
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.MotorState;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 
@@ -71,7 +71,7 @@ public class AimCommand extends CommandBase {
         usingOdometry = false;
 
         // Stop intake and prepare for shooting
-        intake.setIntake(MotorState.STOP);
+        intake.setIntake(IntakeState.STOP);
 
         RobotLog.aa("AimCommand", "Initialized staged auto-aim sequence");
     }
@@ -217,7 +217,7 @@ public class AimCommand extends CommandBase {
         shooter.setHoodPosition(targetHoodPosition);
 
         // Run transfer to feed ring to shooter
-        intake.setIntake(MotorState.TRANSFER);
+        intake.setIntake(IntakeState.TRANSFER);
 
         RobotLog.aa("AimCommand", String.format("Stage 3: Transferring - time=%.2f, dist=%.2f, heading_err=%.3f, using_odom=%b",
                 stageTimer.seconds(), targetDistance, headingError, usingOdometry));
@@ -245,7 +245,7 @@ public class AimCommand extends CommandBase {
         // Stop all subsystems
         drive.driveFieldCentric(0.0, 0.0, 0.0);
         shooter.stopShooter();
-        intake.setIntake(MotorState.STOP);
+        intake.setIntake(IntakeState.STOP);
 
         // Reset detection count for next time
         intake.resetDetectionCount();

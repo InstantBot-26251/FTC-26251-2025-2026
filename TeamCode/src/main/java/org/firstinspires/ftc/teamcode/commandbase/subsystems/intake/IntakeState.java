@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.commandbase.subsystems.intake;
 
-public enum MotorState {
+public enum IntakeState {
     REVERSE,
     STOP,
     FORWARD,

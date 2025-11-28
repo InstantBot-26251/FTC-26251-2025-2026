@@ -17,11 +17,11 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveC
 import android.util.Log;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.commandbase.commands.AimCommand;
+import org.firstinspires.ftc.teamcode.commandbase.commands.FULLAIM;
 import org.firstinspires.ftc.teamcode.commandbase.commands.TeleopDriveCommand;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intake;
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.MotorState;
+import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
 import org.firstinspires.ftc.teamcode.util.Alliance;
@@ -31,7 +31,6 @@ import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 import java.util.ArrayList;
 import java.util.List;
 
-import kotlin.time.Instant;
 
 public class Enigma extends Robot {
     public Alliance alliance;
@@ -103,7 +102,7 @@ public class Enigma extends Robot {
         telemetry.addData("Subsystems", "Initialized (" + subsystems.size() + ")");
     }
 
-    public void teleopInit(Telemetry telemetry, HardwareMap hardwareMap, Gamepad drive, Gamepad manip) {
+    public void autonomousInit(Telemetry telemetry, HardwareMap hardwareMap) {
         reset();
         registerSubsystems();
 
@@ -113,56 +112,88 @@ public class Enigma extends Robot {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        driveController = new GamepadEx(drive);
+        subsystems.forEach(SubsystemTemplate::onAutonomousInit);
+        Log.i("Enigma", "===============Autonomous Initialized==============");
+    }
+
+    public void teleopInit(Telemetry telemetry, HardwareMap hardwareMap, Gamepad driver, Gamepad manip) {
+        reset();
+        registerSubsystems();
+
+        this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        RobotMap.getInstance().init(hardwareMap);
+        for (LynxModule hub : RobotMap.getInstance().getLynxModules()) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+
+        driveController = new GamepadEx(driver);
         manipController = new GamepadEx(manip);
 
         subsystems.forEach(SubsystemTemplate::onTeleopInit);
 
-        // Driver Controls
+        /**
+         *  Driver Controls
+         */
         Drive.getInstance().setDefaultCommand(new TeleopDriveCommand(
                 () -> applyResponseCurve(driveController.getLeftY(), DRIVE_SENSITIVITY),
                 () -> -applyResponseCurve(driveController.getLeftX(), DRIVE_SENSITIVITY),
                 () -> -applyResponseCurve(driveController.getRightX(), ROTATIONAL_SENSITIVITY) * ROTATION_DAMPEN
         ));
 
-            new Trigger(() -> driveController.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > TRIGGER_DEADZONE)
+        new Trigger(() -> driveController.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > TRIGGER_DEADZONE)
                     .whenActive(Drive.getInstance()::enableSlowMode)
                     .whenInactive(Drive.getInstance()::disableSlowMode);
 
-        driveController.getGamepadButton(GamepadKeys.Button.Y)
-                .whenPressed(Drive.getInstance()::autoAimHeadingFAR);
+        // Reset heading
+        driveController.getGamepadButton(GamepadKeys.Button.Y).whenPressed(
+                new InstantCommand(() -> drive.resetHeading())
+        );
 
-        driveController.getGamepadButton(GamepadKeys.Button.X)
-            .whenPressed(Drive.getInstance()::autoAimHeadingCLOSE);
+        // Lock current heading
+        driveController.getGamepadButton(GamepadKeys.Button.A).whenPressed(
+                new InstantCommand(() -> drive.lockCurrentHeading())
+        );
 
-        driveController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(Drive.getInstance()::lockCurrentHeading);
+        // Toggle heading lock
+        driveController.getGamepadButton(GamepadKeys.Button.B).whenPressed(
+                new InstantCommand(() -> drive.toggleHeadingLock())
+        );
 
-        // Manipulator Controls
+        /**
+         * Manipulator Controls
+         */
+
+        // Overrides all intake commands and stops intake
         manipController.getGamepadButton(GamepadKeys.Button.A).whenPressed(
                 new InstantCommand(() -> Intake.ActiveStopIntake())
                 );
 
+        // Intake reverse
         manipController.getGamepadButton(GamepadKeys.Button.X).whileActiveContinuous(
-            new InstantCommand(() -> intake.setIntake(MotorState.REVERSE))
+            new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE))
         );
 
+        // Intake forward
         manipController.getGamepadButton(GamepadKeys.Button.X).whenReleased(
-                new InstantCommand(() -> intake.setIntake(MotorState.FORWARD))
+                new InstantCommand(() -> intake.setIntake(IntakeState.FORWARD))
         );
 
+        // Intake transfer - shoot
         manipController.getGamepadButton(GamepadKeys.Button.Y).whenPressed(
-                new InstantCommand(() -> intake.setIntake(MotorState.TRANSFER))
+                new InstantCommand(() -> intake.setIntake(IntakeState.TRANSFER))
         );
 
+        // Hood and shooter settings auto set
         manipController.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenPressed(
                 new InstantCommand(() -> shooter.autoAim())
         );
 
-//        manipController.getGamepadButton(GamepadKeys.Button.LEBRON).whenPressed(
-//                new AimCommand().execute()
-//        );
+        // FULLAIM LEBRON
+        manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(
+                new InstantCommand(() -> new FULLAIM())
+        );
 
+        Log.i("Enigma", "===============Teleop Initialized==============");
     }
 
     public void periodic() {

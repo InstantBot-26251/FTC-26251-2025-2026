@@ -10,6 +10,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.math.MathFunctions;
+import com.seattlesolvers.solverslib.geometry.Pose2d;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
@@ -149,8 +150,9 @@ public class Drive extends SubsystemTemplate {
     public void lockCurrentHeading() {
         targetHeading = getPose().getHeading();
         headingLockEnabled = true;
-        headingPID.reset();
-        headingPID.setTargetPosition(targetHeading);
+//        headingPID.reset();
+//        headingPID.setTargetPosition(targetHeading);
+        follower.holdPoint(getPose());
         Log.i("Drive", "Heading locked at: " + Math.toDegrees(targetHeading) + " degrees");
     }
 
@@ -209,7 +211,8 @@ public class Drive extends SubsystemTemplate {
      */
     public void disableHeadingLock() {
         headingLockEnabled = false;
-        headingPID.reset();
+//        headingPID.reset();
+        follower.breakFollowing();
         Log.i("Drive", "Heading lock disabled");
     }
 
@@ -366,6 +369,18 @@ public class Drive extends SubsystemTemplate {
      */
     public void setStartingPose(double x, double y, double headingRadians) {
         setStartingPose(new Pose(x, y, headingRadians));
+    }
+
+    /**
+     * Set pose
+     */
+    public void resetHeading() {
+        Pose oldPose = getPoseEstimate();
+        follower.setPose(new Pose(oldPose.getX(), oldPose.getY()));
+    }
+
+    public Pose getPoseEstimate() {
+        return follower.getPose();
     }
 
     /**

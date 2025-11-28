@@ -8,12 +8,10 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
-import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commandbase.commands.SetIntake;
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
@@ -27,7 +25,7 @@ public class Intake extends SubsystemTemplate {
     public ElapsedTime intakeTimer;
 
     public boolean intakeJammed = false;
-    public static MotorState motorState = MotorState.STOP;
+    public static IntakeState intakeState = IntakeState.STOP;
 
     private int detectionCount = 0;
 
@@ -68,8 +66,8 @@ public class Intake extends SubsystemTemplate {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    public void setIntake(MotorState motorState) {
-        switch (motorState) {
+    public void setIntake(IntakeState intakeState) {
+        switch (intakeState) {
             case STOP:
                 intake.setPower(0);
                 break;
@@ -87,28 +85,28 @@ public class Intake extends SubsystemTemplate {
     }
 
     private void toggleIntake() {
-        if (motorState.equals(MotorState.STOP)) {
-            setIntake(MotorState.FORWARD);
+        if (intakeState.equals(IntakeState.STOP)) {
+            setIntake(IntakeState.FORWARD);
         }
     }
 
     private void updateIntake() {
-        switch (motorState) {
+        switch (intakeState) {
             case FORWARD:
                 if (transferFull()) {
-                    setIntake(MotorState.STOP);
+                    setIntake(IntakeState.STOP);
                 }
 
                 if ((intake.isOverCurrent())) {
                     intakeJammed = true;
                     intakeTimer.reset();
-                    setIntake(MotorState.REVERSE);
+                    setIntake(IntakeState.REVERSE);
                 }
                 break;
 
             case REVERSE:
                 if (intakeJammed && intakeTimer.milliseconds() >= INTAKE_UNJAM_TIME) {
-                    setIntake(MotorState.FORWARD);
+                    setIntake(IntakeState.FORWARD);
                     intakeJammed = false;
                     intakeTimer.reset();
                 }
@@ -138,9 +136,9 @@ public class Intake extends SubsystemTemplate {
 
     public static SequentialCommandGroup ActiveStopIntake() {
         return new SequentialCommandGroup(
-                new SetIntake(MotorState.FORWARD),
+                new SetIntake(IntakeState.FORWARD),
                 new WaitCommand(500),
-                new SetIntake(MotorState.STOP)
+                new SetIntake(IntakeState.STOP)
         );
     }
 }
