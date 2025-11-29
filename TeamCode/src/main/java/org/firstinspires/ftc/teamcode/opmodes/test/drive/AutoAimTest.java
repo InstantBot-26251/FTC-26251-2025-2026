@@ -24,7 +24,7 @@ public class AutoAimTest extends OpMode {
     @Override
     public void init() {
         Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, Alliance.BLUE);
+        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         drive = Drive.getInstance();
 

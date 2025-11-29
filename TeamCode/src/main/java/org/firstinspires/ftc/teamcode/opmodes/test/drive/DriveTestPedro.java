@@ -16,7 +16,7 @@ public class DriveTestPedro extends OpMode {
     @Override
     public void init() {
         Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, Alliance.BLUE);
+        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         drive = Drive.getInstance();
 
@@ -43,7 +43,7 @@ public class DriveTestPedro extends OpMode {
 
         // Toggle slow mode with A button
         if (gamepad1.a && !lastA) {
-            drive.toggleSlowMode();
+            drive.disableSlowMode();
         }
         lastA = gamepad1.a;
 

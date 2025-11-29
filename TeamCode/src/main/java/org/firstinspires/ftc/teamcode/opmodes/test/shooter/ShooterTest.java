@@ -18,7 +18,7 @@ public class ShooterTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         // Initialize robot
         Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, Alliance.BLUE);
+        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         shooter = Shooter.getInstance();
         vision = ATVision.getInstance();

@@ -25,7 +25,10 @@ public class Constants {
 
     // Follower Constants
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(5);
+            .mass(5)
+            .useSecondaryTranslationalPIDF(true)
+            .useSecondaryHeadingPIDF(true)
+            .useSecondaryDrivePIDF(true);
 
     // Path Constraints
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
@@ -33,10 +36,10 @@ public class Constants {
     // Mecanum Constants
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .rightFrontMotorName("rf")
-            .rightRearMotorName("rr")
-            .leftRearMotorName("lr")
-            .leftFrontMotorName("lf")
+            .rightFrontMotorName("fr")
+            .rightRearMotorName("br")
+            .leftRearMotorName("bl")
+            .leftFrontMotorName("fl")
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
