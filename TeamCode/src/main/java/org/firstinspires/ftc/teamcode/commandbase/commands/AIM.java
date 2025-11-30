@@ -4,11 +4,11 @@ import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 
-public class FULLAIM extends SequentialCommandGroup {
-    public FULLAIM() {
+public class AIM extends SequentialCommandGroup {
+    public AIM() {
         Enigma robot = Enigma.getInstance();
         addCommands(
-                new AimCommand()
+                new AimLaunch()
         );
     }
 }

@@ -11,11 +11,9 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
 
-public class AimCommand extends CommandBase {
+public class AimLaunch extends CommandBase {
 
-    private final Enigma robot;
     private final Drive drive;
     private final Shooter shooter;
     private final Intake intake;
@@ -47,8 +45,7 @@ public class AimCommand extends CommandBase {
     private boolean impossibleShot = false;
     private boolean usingOdometry = false;
 
-    public AimCommand() {
-        robot = Enigma.getInstance();
+    public AimLaunch() {
         drive = Drive.getInstance();
         shooter = Shooter.getInstance();
         intake = Intake.getInstance();
@@ -72,6 +69,7 @@ public class AimCommand extends CommandBase {
 
         // Stop intake and prepare for shooting
         intake.setIntake(IntakeState.STOP);
+        shooter.setShooter(shooter.getShooterVelocity(), true);
 
         RobotLog.aa("AimCommand", "Initialized staged auto-aim sequence");
     }

@@ -4,22 +4,15 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
-import org.firstinspires.ftc.teamcode.util.Alliance;
 
 
 @TeleOp(name = "Test: Drive Pedro", group = "Test")
 public class DriveTestPedro extends OpMode {
     private Drive drive;
-    private Enigma robot;
 
     @Override
     public void init() {
-        Enigma robot = Enigma.getInstance();
-        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
-
         drive = Drive.getInstance();
-
         drive.onTeleopInit();
 
         telemetry.addLine("Drive Test OpMode Initialized");
@@ -28,7 +21,6 @@ public class DriveTestPedro extends OpMode {
         telemetry.addLine("  Right Stick X: Turn");
         telemetry.addLine("  A: Toggle Slow Mode");
         telemetry.addLine("  B: Toggle Heading Lock");
-        telemetry.addLine("Ready to drive in Field Centric mode!");
         telemetry.update();
     }
 
@@ -71,7 +63,7 @@ public class DriveTestPedro extends OpMode {
         telemetry.update();
     }
 
-    // Button state tracking for toggle functionality
+    // Button state tracking for toggling stuff
     private boolean lastA = false;
     private boolean lastB = false;
     }

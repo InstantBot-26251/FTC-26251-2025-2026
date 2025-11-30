@@ -14,7 +14,16 @@ import java.util.List;
 public class RobotMap {
     private HardwareMap hardwareMap;
 
-    private static RobotMap INSTANCE;
+    private static RobotMap instance = null;
+
+    // Returns an instance of this
+    public static RobotMap getInstance() {
+        if (instance == null) {
+            instance = new RobotMap();
+        }
+        return instance;
+    }
+
 
     // Drive hardware
     public DcMotorEx FRONT_RIGHT;
@@ -48,13 +57,6 @@ public class RobotMap {
     public Servo HOOD;
 
     private RobotMap() {
-    }
-
-    public static RobotMap getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new RobotMap();
-        }
-        return INSTANCE;
     }
 
     public void init(final HardwareMap hardwareMap) {
@@ -91,6 +93,12 @@ public class RobotMap {
 
         // Initialize hood servo
         HOOD = hardwareMap.get(Servo.class, "hood");
+    }
+
+
+    // Get hardwareMap instance
+    public HardwareMap getHardwareMap() {
+        return this.hardwareMap;
     }
 
     // Get hubs

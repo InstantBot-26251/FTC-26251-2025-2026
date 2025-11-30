@@ -14,10 +14,10 @@ public class Chassis {
 
     public Chassis(HardwareMap hardwareMap) {
         // Initialize motors
-        fl = hardwareMap.get(DcMotor.class, "lf");
-        fr = hardwareMap.get(DcMotor.class, "rf");
-        bl = hardwareMap.get(DcMotor.class, "lr");
-        br = hardwareMap.get(DcMotor.class, "rr");
+        fl = hardwareMap.get(DcMotor.class, "fl");
+        fr = hardwareMap.get(DcMotor.class, "fr");
+        bl = hardwareMap.get(DcMotor.class, "bl");
+        br = hardwareMap.get(DcMotor.class, "br");
 
         // Set motor directions and zero power behavior
         fl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -26,7 +26,9 @@ public class Chassis {
         br.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         bl.setDirection(DcMotorSimple.Direction.REVERSE);
-        br.setDirection(DcMotorSimple.Direction.REVERSE);
+        fl.setDirection(DcMotorSimple.Direction.REVERSE);
+        fr.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
         // Initialize x
         imu = hardwareMap.get(IMU.class, "imu");

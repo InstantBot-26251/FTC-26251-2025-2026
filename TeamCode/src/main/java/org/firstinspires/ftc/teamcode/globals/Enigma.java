@@ -17,7 +17,7 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveC
 import android.util.Log;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.commandbase.commands.FULLAIM;
+import org.firstinspires.ftc.teamcode.commandbase.commands.AIM;
 import org.firstinspires.ftc.teamcode.commandbase.commands.TeleopDriveCommand;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intake;
@@ -190,7 +190,7 @@ public class Enigma extends Robot {
 
         // FULLAIM LEBRON
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(
-                new InstantCommand(() -> new FULLAIM())
+                new InstantCommand(() -> new AIM())
         );
 
         Log.i("Enigma", "===============Teleop Initialized==============");

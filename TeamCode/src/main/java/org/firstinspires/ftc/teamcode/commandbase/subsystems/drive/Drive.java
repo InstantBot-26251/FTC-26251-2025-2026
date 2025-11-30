@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.commandbase.subsystems.drive;
 
 import android.util.Log;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
 import static org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.DriveConstants.*;
 
 
@@ -12,6 +13,8 @@ import com.pedropathing.control.PIDFController;
 import com.pedropathing.math.MathFunctions;
 import com.seattlesolvers.solverslib.geometry.Pose2d;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
@@ -19,6 +22,8 @@ import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 public class Drive extends SubsystemTemplate {
 
     private static final Drive INSTANCE = new Drive();
+
+    private Telemetry telemetry;
 
     public static Drive getInstance() {
         return INSTANCE;
@@ -41,6 +46,10 @@ public class Drive extends SubsystemTemplate {
 
     @Override
     public void onTeleopInit() {
+        telemetry = Enigma.getInstance().getTelemetry();
+
+        Constants.createFollower(RobotMap.getInstance().getHardwareMap());
+
         // Start teleop drive mode with brake mode enabled
         startTeleopDrive(true);
 
@@ -51,13 +60,8 @@ public class Drive extends SubsystemTemplate {
         slowModeEnabled = false;
         slowModeMultiplier = 0.5;
 
-        // Disable heading lock from autonomous
-        disableHeadingLock();
+        follower.setPose(follower.getPose());
 
-        // Ensure no automated paths are running
-        if (automatedDrive) {
-            breakFollowing();
-        }
 
         Log.i("Drive", "Teleop initialized - manual control enabled");
     }

@@ -81,6 +81,18 @@ public class ATVision extends SubsystemTemplate {
         }
     }
 
+    public double getDistance() {
+        ArrayList<AprilTagDetection> detections = getDetections();
+
+        if (detections != null && !detections.isEmpty()) {
+            AprilTagDetection detection = detections.get(0);
+            if (detection.ftcPose != null) {
+                return detection.ftcPose.range; // Distance in inches
+            }
+        }
+
+        return -1.0; // No detection
+    }
 
     public String getMotif() {
         ArrayList<AprilTagDetection> detections = getDetections();
