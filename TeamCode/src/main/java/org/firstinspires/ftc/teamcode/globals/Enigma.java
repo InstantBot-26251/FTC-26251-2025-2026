@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.globals;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.pedropathing.follower.Follower;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -35,6 +36,7 @@ import java.util.List;
 public class Enigma extends Robot {
     public Alliance alliance;
 
+    public Follower follower;
     private static Enigma INSTANCE;
 
     // Hardware and telemetry references
@@ -44,8 +46,8 @@ public class Enigma extends Robot {
     private LynxModule hub;
 
     // Subsystems
-    private Drive drive;
-    private Shooter shooter;
+    public Drive drive;
+    public Shooter shooter;
     public Intake intake;
 
     // List to track all subsystems for periodic updates
@@ -60,27 +62,20 @@ public class Enigma extends Robot {
     private static final double ROTATION_DAMPEN = 0.9;
 
 
-    private Enigma() {
+    private Enigma(HardwareMap hardwareMap) {
         reset();
         robotInit();
         Log.i("Enigma", "===============ROBOT CREATED SUCCESSFULLY===============");
     }
 
-    /**
-     * Get the singleton instance
-     */
-    public static Enigma getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new Enigma();
-        }
-        return INSTANCE;
-    }
 
     // Initializes all subsystems and adds them to the list. New subsystems should be added here.
     private void robotInit() {
         subsystems.clear();
         subsystems.add(Drive.getInstance().initialize());
         subsystems.add(ATVision.getInstance().initialize());
+        subsystems.add(Shooter.getInstance().initialize());
+        subsystems.add(Intake.getInstance().initialize());
         registerSubsystems();
     }
 

@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.globals.Enigma;
 
 public class SetIntake extends CommandBase {
-    private final Enigma robot;
+//    private final Enigma robot;
     private final IntakeState intakeState;
     private boolean waitForArtifacts;
 
@@ -18,19 +18,19 @@ public class SetIntake extends CommandBase {
     }
 
     public SetIntake(IntakeState intakeState, boolean waitForArtifacts) {
-        robot = Enigma.getInstance();
+//        robot = Enigma.getInstance();
         this.intakeState = intakeState;
         this.waitForArtifacts = waitForArtifacts;
 
         timer = new ElapsedTime();
 
-        addRequirements(robot.intake);
+//        addRequirements(robot.intake);
     }
 
     @Override
     public void initialize() {
         timer.reset();
-        robot.intake.setIntake(intakeState);
+//        robot.intake.setIntake(intakeState);
     }
 
     @Override
@@ -45,9 +45,9 @@ public class SetIntake extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        if (waitForArtifacts && robot.intake.transferFull()) {
-            return true;
-        }
+//        if (waitForArtifacts && robot.intake.transferFull()) {
+//            return true;
+//        }
 
         return !waitForArtifacts && timer.milliseconds() > 200;
     }

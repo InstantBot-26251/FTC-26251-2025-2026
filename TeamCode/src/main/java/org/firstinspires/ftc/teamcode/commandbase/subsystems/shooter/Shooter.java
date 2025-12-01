@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 public class Shooter extends SubsystemTemplate {
 
-    private Enigma robot = Enigma.getInstance();
+//    private Enigma robot = Enigma.getInstance();
 
     private DcMotorEx shooterMotor1;
     private DcMotorEx shooterMotor2;
@@ -55,14 +55,14 @@ public class Shooter extends SubsystemTemplate {
 
     @Override
     public void onAutonomousInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
         vision = ATVision.getInstance();
         initHardware();
     }
 
     @Override
     public void onTeleopInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
         vision = ATVision.getInstance();
         initHardware();
     }

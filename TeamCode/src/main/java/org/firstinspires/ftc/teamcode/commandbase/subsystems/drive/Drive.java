@@ -46,7 +46,7 @@ public class Drive extends SubsystemTemplate {
 
     @Override
     public void onTeleopInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
 
         Constants.createFollower(RobotMap.getInstance().getHardwareMap());
 
@@ -91,7 +91,7 @@ public class Drive extends SubsystemTemplate {
 
     public Drive() {
         // This is the official Pedro 2.0.4 initialization method
-        follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
+//        follower = Constants.createFollower(Enigma.getInstance().getHardwareMap());
 
         // Set default starting pose
         follower.setStartingPose(new Pose(0, 0, 0));

@@ -40,8 +40,8 @@ public class HoodTuningTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize robot
-        Enigma robot = Enigma.getInstance();
-        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
+//        Enigma robot = Enigma.getInstance();
+//        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         shooter = Shooter.getInstance();
         vision = ATVision.getInstance();

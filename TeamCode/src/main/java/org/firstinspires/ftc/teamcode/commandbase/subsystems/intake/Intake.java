@@ -42,13 +42,13 @@ public class Intake extends SubsystemTemplate {
 
     @Override
     public void onAutonomousInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
         initHardware();
     }
 
     @Override
     public void onTeleopInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
         initHardware();
     }
 

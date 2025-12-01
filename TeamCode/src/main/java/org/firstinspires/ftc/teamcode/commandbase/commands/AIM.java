@@ -6,7 +6,6 @@ import org.firstinspires.ftc.teamcode.globals.Enigma;
 
 public class AIM extends SequentialCommandGroup {
     public AIM() {
-        Enigma robot = Enigma.getInstance();
         addCommands(
                 new AimLaunch()
         );

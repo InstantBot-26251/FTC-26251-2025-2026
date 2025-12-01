@@ -31,7 +31,7 @@ public class ATVision extends SubsystemTemplate {
 
     @Override
     public void onAutonomousInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
 
         makeProcessor();
         makePortal();
@@ -39,7 +39,7 @@ public class ATVision extends SubsystemTemplate {
 
     @Override
     public void onTeleopInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
 
         makeProcessor();
         makePortal();

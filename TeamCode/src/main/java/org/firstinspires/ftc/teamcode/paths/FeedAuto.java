@@ -77,7 +77,7 @@ public class FeedAuto extends OpMode {
                     .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(180))
                     .build();
 
-            Score = follower
+            Score1 = follower
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(
@@ -89,7 +89,7 @@ public class FeedAuto extends OpMode {
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(120))
                     .build();
 
-            Intake = follower
+            Intake2 = follower
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(
@@ -101,7 +101,7 @@ public class FeedAuto extends OpMode {
                     .setLinearHeadingInterpolation(Math.toRadians(120), Math.toRadians(180))
                     .build();
 
-            Score = follower
+            Score2 = follower
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(

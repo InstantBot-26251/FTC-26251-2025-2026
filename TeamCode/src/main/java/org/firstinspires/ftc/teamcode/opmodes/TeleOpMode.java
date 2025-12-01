@@ -21,7 +21,7 @@ public class TeleOpMode extends CommandOpMode {
 
     TelemetryData telemetryData = new TelemetryData(new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry()));
 
-    private final Enigma robot = Enigma.getInstance();
+//    private final Enigma robot = Enigma.getInstance();
 
 
     @Override
@@ -31,12 +31,12 @@ public class TeleOpMode extends CommandOpMode {
         super.reset(); // Resets Command Scheduler
 
 
-        robot.teleopInit(telemetry, hardwareMap, driver, operator);
+//        robot.teleopInit(telemetry, hardwareMap, driver, operator);
     }
 
     @Override
     public void run() {
-        robot.periodic();
+//        robot.periodic();
     }
 
 }
