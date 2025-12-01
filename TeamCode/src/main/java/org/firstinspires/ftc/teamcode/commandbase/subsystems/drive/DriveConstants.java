@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode.commandbase.subsystems.drive;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.pedropathing.geometry.Pose;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @Config
 public class DriveConstants {
@@ -15,6 +19,13 @@ public class DriveConstants {
     // For debugging
     public static double headingError = 0.0;
     public static double headingPower = 0.0;
+
+    public static double GOAL_POSE_X = 5; // TODO: REPLACE WITH REAL VALUE
+    public static double GOAL_POSE_Y = 0;
+
+    public static DistanceUnit DISTANCE_UNIT = DistanceUnit.INCH;
+    public static AngleUnit ANGLE_UNIT = AngleUnit.RADIANS;
+
 
     // For auto-aim
     public static double currentHeading = 0.0;

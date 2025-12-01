@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.seattlesolvers.solverslib.util.InterpLUT;
+
+import java.util.Arrays;
 
 @Config
 public class ShooterConstants {
@@ -12,8 +16,14 @@ public class ShooterConstants {
     public static double HOOD_MIN_POSITION = 0.0;  // Flat/low angle
     public static double HOOD_MAX_POSITION = 1.0;  // Max angle
 
+    public static PIDFCoefficients SHOOTER_PIDF_COEFFICIENTS = new PIDFCoefficients(0.01, 0, 0, 0.01); // Coefficients for ticks
+
+    public static double SHOOTER_MAX_VELOCITY = 2000; // Ticks/sec
+    public static double SHOOTER_MIN_VELOCITY = 0; // Ticks/sec
+
+    public static double SHOOTER_VEL_TOLERANCE = 100; // Ticks
+
     // Empirically determined hood positions at various distances
-    // TODO: Fill these in after testing! Format: {distance_in_inches, hood_servo_position}
     public static final double[][] HOOD_LOOKUP_TABLE = {
             {30.0, 0.10},   // ~30 inches - Example data, replace with real values once tested, run hoodtesting
             {36.0, 0.15},   // ~3 feet

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.test;
+package org.firstinspires.ftc.teamcode.opmodes.test.shooter;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -17,8 +17,8 @@ public class ShooterTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize robot
-        Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, Alliance.BLUE);
+//        Enigma robot = Enigma.getInstance();
+//        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         shooter = Shooter.getInstance();
         vision = ATVision.getInstance();
@@ -91,8 +91,8 @@ public class ShooterTest extends LinearOpMode {
             }
 
             // Update periodic methods
-            shooter.onTeleopPeriodic();
-            vision.onTeleopPeriodic();
+            shooter.periodic();
+            vision.periodic();
 
             // Telemetry
             telemetry.addData("Shooter Velocity", "%.0f ticks/sec", shooter.getShooterVelocity());
@@ -105,7 +105,5 @@ public class ShooterTest extends LinearOpMode {
             telemetry.update();
         }
 
-        shooter.onDisable();
-        vision.onDisable();
     }
 }

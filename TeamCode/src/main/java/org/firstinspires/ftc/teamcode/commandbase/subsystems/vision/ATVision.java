@@ -31,7 +31,7 @@ public class ATVision extends SubsystemTemplate {
 
     @Override
     public void onAutonomousInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
 
         makeProcessor();
         makePortal();
@@ -39,44 +39,15 @@ public class ATVision extends SubsystemTemplate {
 
     @Override
     public void onTeleopInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
+//        telemetry = Enigma.getInstance().getTelemetry();
 
         makeProcessor();
         makePortal();
     }
-    @Override
-    public void onTestInit() {
-        telemetry = Enigma.getInstance().getTelemetry();
-        makeProcessor();
-        makePortal();
-    }
 
     @Override
-    public void onAutonomousPeriodic() {
-        // Vision processing happens automatically
-        // Add telemetry if needed during autonomous
+    public void periodic() {
         updateTelemetry();
-    }
-
-    @Override
-    public void onTeleopPeriodic() {
-        // Vision processing happens automatically
-        // Add telemetry if needed during teleop
-        updateTelemetry();
-    }
-
-    @Override
-    public void onTestPeriodic() {
-        // Vision processing happens automatically
-        updateTelemetry();
-    }
-
-    @Override
-    public void onDisable() {
-        // Clean up vision resources when disabled
-        if (visionPortal != null) {
-            stopStreaming();
-        }
     }
 
     public void makeProcessor() {
@@ -110,6 +81,18 @@ public class ATVision extends SubsystemTemplate {
         }
     }
 
+    public double getDistance() {
+        ArrayList<AprilTagDetection> detections = getDetections();
+
+        if (detections != null && !detections.isEmpty()) {
+            AprilTagDetection detection = detections.get(0);
+            if (detection.ftcPose != null) {
+                return detection.ftcPose.range; // Distance in inches
+            }
+        }
+
+        return -1.0; // No detection
+    }
 
     public String getMotif() {
         ArrayList<AprilTagDetection> detections = getDetections();

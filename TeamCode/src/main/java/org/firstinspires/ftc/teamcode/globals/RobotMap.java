@@ -1,15 +1,29 @@
 package org.firstinspires.ftc.teamcode.globals;
 
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 
+import java.util.List;
+
 
 public class RobotMap {
+    private HardwareMap hardwareMap;
 
-    private static RobotMap INSTANCE;
+    private static RobotMap instance = null;
+
+    // Returns an instance of this
+    public static RobotMap getInstance() {
+        if (instance == null) {
+            instance = new RobotMap();
+        }
+        return instance;
+    }
+
 
     // Drive hardware
     public DcMotorEx FRONT_RIGHT;
@@ -22,6 +36,7 @@ public class RobotMap {
 
     // Intake hardware
     public DcMotorEx INTAKE;
+    public RevColorSensorV3 PROXIMITY_SENSOR;
 
 //    // Kicker subsystem hardware
 //    public Servo KICKER_0;
@@ -44,14 +59,7 @@ public class RobotMap {
     private RobotMap() {
     }
 
-    public static RobotMap getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new RobotMap();
-        }
-        return INSTANCE;
-    }
-
-    public void init(HardwareMap hardwareMap) {
+    public void init(final HardwareMap hardwareMap) {
         // Initialize drive motors
         FRONT_RIGHT = hardwareMap.get(DcMotorEx.class, "rf");
         BACK_RIGHT = hardwareMap.get(DcMotorEx.class, "rr");
@@ -63,6 +71,8 @@ public class RobotMap {
 
         // Initialize intake motors
         INTAKE = hardwareMap.get(DcMotorEx.class, "intake");
+        PROXIMITY_SENSOR = hardwareMap.get(RevColorSensorV3.class, "proximitySensor");
+
 
 //        // Initialize kicker servos
 //        KICKER_0 = hardwareMap.get(Servo.class, "kicker0");
@@ -83,5 +93,16 @@ public class RobotMap {
 
         // Initialize hood servo
         HOOD = hardwareMap.get(Servo.class, "hood");
+    }
+
+
+    // Get hardwareMap instance
+    public HardwareMap getHardwareMap() {
+        return this.hardwareMap;
+    }
+
+    // Get hubs
+    public List<LynxModule> getLynxModules() {
+        return hardwareMap.getAll(LynxModule.class);
     }
 }

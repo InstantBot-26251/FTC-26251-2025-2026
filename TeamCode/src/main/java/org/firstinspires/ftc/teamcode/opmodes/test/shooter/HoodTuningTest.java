@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes.test;
+package org.firstinspires.ftc.teamcode.opmodes.test.shooter;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -40,8 +40,8 @@ public class HoodTuningTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize robot
-        Enigma robot = Enigma.getInstance();
-        robot.init(hardwareMap, Alliance.BLUE);
+//        Enigma robot = Enigma.getInstance();
+//        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
 
         shooter = Shooter.getInstance();
         vision = ATVision.getInstance();
@@ -160,8 +160,8 @@ public class HoodTuningTest extends LinearOpMode {
             backPressed = gamepad1.back;
 
             // Update subsystems
-            shooter.onTeleopPeriodic();
-            vision.onTeleopPeriodic();
+            shooter.periodic();
+            vision.periodic();
 
             // Display current status
             telemetry.addData("Shooter", shooterRunning ? "RUNNING" : "STOPPED");
@@ -202,8 +202,6 @@ public class HoodTuningTest extends LinearOpMode {
             telemetry.update();
         }
 
-        shooter.onDisable();
-        vision.onDisable();
     }
 
     private void recordShot(boolean success) {

@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode.commandbase.commands;
 
 import com.seattlesolvers.solverslib.command.CommandBase;
 
-
-
 public class IntakeCommand extends CommandBase {
 
     private long lastUpdateTime = 0;
