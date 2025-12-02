@@ -6,13 +6,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.ShooterConstants;
+import org.firstinspires.ftc.teamcode.globals.Robot;
 import org.firstinspires.ftc.teamcode.util.RollingAverage;
 
 
 @TeleOp(name = "Shooter: PID Tuner", group = "Testing")
 public class ShooterPIDTuner extends OpMode {
 
-    private Shooter shooter;
+    private Robot robot;
 
     // Tunable gains
     private double kP = 0.0;
@@ -52,7 +53,7 @@ public class ShooterPIDTuner extends OpMode {
 
     @Override
     public void init() {
-        shooter = Shooter.getInstance();
+        robot.teleopInit(telemetry, hardwareMap);
 
         // Load current PIDF values as starting point
          kP = ShooterConstants.SHOOTER_PIDF_COEFFICIENTS.p;
@@ -67,7 +68,6 @@ public class ShooterPIDTuner extends OpMode {
 
     @Override
     public void start() {
-        shooter.onTeleopInit();
         buttonTimer.reset();
         performanceTimer.reset();
     }
@@ -139,10 +139,10 @@ public class ShooterPIDTuner extends OpMode {
         if (gamepad1.x) {
             shooterActive = !shooterActive;
             if (shooterActive) {
-                shooter.setShooterVelocityTicks(targetVelocity);
+                robot.shooter.setShooterVelocityTicks(targetVelocity);
                 resetMetrics();
             } else {
-                shooter.stopShooter();
+                robot.shooter.stopShooter();
             }
             buttonPressed = true;
         }
@@ -196,11 +196,11 @@ public class ShooterPIDTuner extends OpMode {
 
     private void applyPIDFGains() {
         // Apply gains directly to the shooter's PIDF controller
-        shooter.updatePIDFGains(kP, kI, kD, kF);
+        robot.shooter.updatePIDFGains(kP, kI, kD, kF);
     }
 
     private void updatePerformanceMetrics() {
-        double currentVel = shooter.getShooterVelocity();
+        double currentVel = robot.shooter.getShooterVelocity();
         double error = targetVelocity - currentVel;
 
         // Track error
@@ -259,10 +259,10 @@ public class ShooterPIDTuner extends OpMode {
         telemetry.addData("--- Shooter Status ---", "");
         telemetry.addData("Active", shooterActive ? "YES" : "NO");
         telemetry.addData("Target Velocity", "%.0f ticks/sec", targetVelocity);
-        telemetry.addData("Current Velocity", "%.0f ticks/sec", shooter.getShooterVelocity());
-        telemetry.addData("Error", "%.0f ticks/sec", targetVelocity - shooter.getShooterVelocity());
+        telemetry.addData("Current Velocity", "%.0f ticks/sec", robot.shooter.getShooterVelocity());
+        telemetry.addData("Error", "%.0f ticks/sec", targetVelocity - robot.shooter.getShooterVelocity());
         telemetry.addData("Error %", "%.1f%%",
-                Math.abs((targetVelocity - shooter.getShooterVelocity()) / targetVelocity * 100.0));
+                Math.abs((targetVelocity - robot.shooter.getShooterVelocity()) / targetVelocity * 100.0));
 
         telemetry.addData("", "");
 
@@ -303,7 +303,7 @@ public class ShooterPIDTuner extends OpMode {
             return "Press X to start shooter";
         }
 
-        double error = Math.abs(targetVelocity - shooter.getShooterVelocity());
+        double error = Math.abs(targetVelocity - robot.shooter.getShooterVelocity());
         double errorPercent = (error / targetVelocity) * 100.0;
 
         if (kP == 0.0 && kI == 0.0 && kD == 0.0 && kF == 0.0) {
@@ -323,7 +323,7 @@ public class ShooterPIDTuner extends OpMode {
 
     @Override
     public void stop() {
-        shooter.stopShooter();
+        robot.shooter.stopShooter();
 
         // Print final gains to console
         telemetry.addData("=== FINAL GAINS ===", "");

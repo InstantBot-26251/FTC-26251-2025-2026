@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes.test.shooter;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
-import org.firstinspires.ftc.teamcode.util.Alliance;
 
 @TeleOp(name = "Test: Shooter", group = "Test")
 public class ShooterTest extends LinearOpMode {

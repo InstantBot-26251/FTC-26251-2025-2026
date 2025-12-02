@@ -54,7 +54,7 @@ public class RobotMap {
     public DcMotorEx SHOOTER_0;
     public DcMotorEx SHOOTER_1;
 
-    public Servo HOOD;
+//    public Servo HOOD; //TODO: No hood for now
 
     private RobotMap() {
     }
@@ -92,7 +92,7 @@ public class RobotMap {
         SHOOTER_1 = hardwareMap.get(DcMotorEx.class, "shooter1");
 
         // Initialize hood servo
-        HOOD = hardwareMap.get(Servo.class, "hood");
+//        HOOD = hardwareMap.get(Servo.class, "hood"); //TODO: No hood for now
     }
 
 

@@ -4,14 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
-import org.firstinspires.ftc.teamcode.util.Alliance;
+import org.firstinspires.ftc.teamcode.globals.Robot;
 
 @TeleOp(name = "Test: Auto Aim", group = "Test")
 public class AutoAimTest extends OpMode {
 
     private Drive drive;
-    private Enigma robot;
+    private Robot robot;
 
     public enum StateMachine {
         CLOSE,
@@ -24,11 +23,10 @@ public class AutoAimTest extends OpMode {
     @Override
     public void init() {
 //        Enigma robot = Enigma.getInstance();
-        robot.teleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
+        robot.teleopInitWithControls(telemetry, hardwareMap, gamepad1, gamepad2);
 
         drive = Drive.getInstance();
 
-        drive.onTeleopInit();
     }
 
     @Override
