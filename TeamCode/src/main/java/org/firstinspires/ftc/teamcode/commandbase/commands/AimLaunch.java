@@ -185,7 +185,7 @@ public class AimLaunch extends CommandBase {
         drive.driveFieldCentric(0.0, 0.0, turn);
 
         // Continuously update shooter settings based on current distance
-        shooter.setShooterVelocityForDistance(targetDistance);
+        shooter.setArbalestVelocityForDistance(targetDistance);
         double targetHoodPosition = shooter.calculateHoodAngle(targetDistance);
         shooter.setHoodPosition(targetHoodPosition);
 

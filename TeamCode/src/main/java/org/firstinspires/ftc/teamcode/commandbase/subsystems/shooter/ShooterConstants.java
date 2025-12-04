@@ -1,33 +1,29 @@
 package org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.seattlesolvers.solverslib.util.InterpLUT;
-
-import java.util.Arrays;
 
 @Config
 public class ShooterConstants {
-
+    // Arbalest PIDF coefficients
     public static double kP = 0.1;
     public static double kI = 0.0;
     public static double kD = 0.0;
     public static double kF = 0.0075;
-    // Shooter power constants
-    public static double SHOOTER_IDLE_POWER = 0.0;
-    public static double SHOOTER_MAX_POWER = 1.0;
+
+
+    // Arbalest power constants
+    public static double ARBALEST_IDLE_POWER = 0.0;
+    public static double ARBALEST_MAX_POWER = 1.0;
+
+    public static double ARBALEST_MAX_VELOCITY = 2000; // Ticks/sec
+    public static double ARBALEST_MIN_VELOCITY = 0; // Ticks/sec
+
+    public static double ARBALEST_VEL_TOLERANCE = 100; // Ticks
 
 //    // Hood angle constants
 //    public static double HOOD_MIN_POSITION = 0.0;  // Flat/low angle
 //    public static double HOOD_MAX_POSITION = 1.0;  // Max angle // TODO: No hood for now
 
-    public static PIDFCoefficients SHOOTER_PIDF_COEFFICIENTS = new PIDFCoefficients(kP, kI, kD, kF); // Coefficients for ticks
-
-    public static double SHOOTER_MAX_VELOCITY = 2000; // Ticks/sec
-    public static double SHOOTER_MIN_VELOCITY = 0; // Ticks/sec
-
-    public static double SHOOTER_VEL_TOLERANCE = 100; // Ticks
-//
 //    // Empirically determined hood positions at various distances
 //    public static final double[][] HOOD_LOOKUP_TABLE = {
 //            {30.0, 0.10},   // ~30 inches - Example data, replace with real values once tested, run hoodtesting

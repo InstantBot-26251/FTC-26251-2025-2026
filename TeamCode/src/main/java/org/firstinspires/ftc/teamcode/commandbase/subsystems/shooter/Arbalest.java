@@ -5,22 +5,20 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shoo
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
-import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
-import org.firstinspires.ftc.teamcode.util.FlywheelSpECialPID;
 
 import java.util.Arrays;
 
-public class Shooter extends SubsystemBase {
+public class Arbalest {
 
-    private DcMotorEx shooterMotor1;
-    private DcMotorEx shooterMotor2;
+    private DcMotorEx arbalestL;
+    private DcMotorEx arbalestR;
 //    private Servo hoodServo; //TODO: No hood for now
+
+    public static int vel = 0;
 
     private Telemetry telemetry;
     private ATVision vision;
@@ -31,50 +29,32 @@ public class Shooter extends SubsystemBase {
             Arrays.asList(1200.0, 1320.0, 1450.0, 1580.0, 1700.0, 1830.0, 1950.0, 2075.0, 2200.0)
     );
 
-    private FlywheelSpECialPID shooterController;
-
-
     private boolean activeVelocityControl = false;
     private double targetVelocityTicks = 0.0;
     private boolean activeControl = false;
 
-    private static final Shooter INSTANCE = new Shooter();
 
-    public static Shooter getInstance() {
-        return INSTANCE;
-    }
-
-    public Shooter() {
+    public Arbalest(HardwareMap hardwareMap) {
         VELOCITY_LOOKUP_TABLE.createLUT();
 
-        shooterController = new FlywheelSpECialPID(SHOOTER_PIDF_COEFFICIENTS);
-        shooterController.setTolerance(SHOOTER_VEL_TOLERANCE);
+        initHardware(hardwareMap);
 
-        shooterController.setPIDF(0.1, 0.0, 0.0, 0.0075);
     }
 
 
-    public void initHardware(HardwareMap hardwareMap, Telemetry telemetry) {
-        this.telemetry = telemetry;
-        this.vision = ATVision.getInstance();
+    public void initHardware(HardwareMap hardwareMap) {
+        // Initialize arbalest
+        arbalestL = hardwareMap.get(DcMotorEx.class, "arbalestL");
+        arbalestR = hardwareMap.get(DcMotorEx.class, "arbalestR");
 
-        RobotMap map = RobotMap.getInstance();
+        arbalestR.setDirection(DcMotor.Direction.REVERSE);
 
-        // Initialize shooter motors
-        shooterMotor1 = map.SHOOTER_0;
-        shooterMotor2 = map.SHOOTER_1;
+        arbalestL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Set motor directions
-        shooterMotor1.setDirection(DcMotor.Direction.FORWARD);
-        shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
+        arbalestL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        arbalestR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        // Set motor modes
-        shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        // Set zero power behavior
-        shooterMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        shooterMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        arbalestR.setVelocityPIDFCoefficients(kP, kI, kD, kF);
 
 //        // Initialize hood servo
 //        hoodServo = map.HOOD;
@@ -85,41 +65,50 @@ public class Shooter extends SubsystemBase {
         targetVelocityTicks = 0.0;
     }
 
-    @Override
     public void periodic() {
-        updateVelocityControl();
+//        updateVelocityControl();
         updateTelemetry();
     }
 
-    public void setShooter(double vel, boolean setActiveControl) {
-        shooterController.setSetPoint(Math.min(VELOCITY_LOOKUP_TABLE.get(vel), SHOOTER_MAX_VELOCITY));
-        targetVelocityTicks = vel;
-        activeControl = setActiveControl;
+//    public void setShooter(double vel, boolean setActiveControl) {
+//        shooterController.setSetPoint(Math.min(VELOCITY_LOOKUP_TABLE.get(vel), SHOOTER_MAX_VELOCITY));
+//        targetVelocityTicks = vel;
+//        activeControl = setActiveControl;
+//    }
+
+    public void setArbalestVelocity(int vel) {
+        arbalestR.setVelocityPIDFCoefficients(kP, kI, kD, kF);
+        arbalestR.setVelocity(vel);
+        arbalestL.setPower(arbalestL.getPower());
+    }
+
+    public double getVelError() {
+        return Math.abs(arbalestR.getVelocity() - vel);
     }
 
     /**
      * Set shooter motors to a specific power
      */
-    public void setShooterPower(double power) {
-        activeVelocityControl = false;
-        power = Math.max(0.0, Math.min(1.0, power));
-        shooterMotor1.setPower(power);
-        shooterMotor2.setPower(power);
-    }
+//    public void setShooterPower(double power) {
+//        activeVelocityControl = false;
+//        power = Math.max(0.0, Math.min(1.0, power));
+//        shooterMotor1.setPower(power);
+//        shooterMotor2.setPower(power);
+//    }
 
-    /**
-     * Start the shooter at full power
-     */
-    public void startShooter() {
-        setShooterPower(SHOOTER_MAX_POWER);
-    }
-
-    /**
-     * Stop the shooter
-     */
-    public void stopShooter() {
-        setShooterPower(SHOOTER_IDLE_POWER);
-    }
+//    /**
+//     * Start the shooter at full power
+//     */
+//    public void startShooter() {
+//        setShooterPower(SHOOTER_MAX_POWER);
+//    }
+//
+//    /**
+//     * Stop the shooter
+//     */
+//    public void stopShooter() {
+//        setShooterPower(SHOOTER_IDLE_POWER);
+//    }
 
 //    /**
 //     * Set hood to a specific position
@@ -137,26 +126,30 @@ public class Shooter extends SubsystemBase {
             return false;
         }
 
-        return shooterController.atSetPoint();
+        if (arbalestR.getTargetPosition() == arbalestR.getCurrentPosition() || getVelError() <= 20) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * Increase target velocity by a fixed amount (for manual tuning)
      */
-    public void increaseVelocity(double delta) {
-        if (activeVelocityControl) {
-            setShooterVelocityTicks(targetVelocityTicks + delta);
-        }
-    }
+//    public void increaseVelocity(double delta) {
+//        if (activeVelocityControl) {
+//            setShooterVelocityTicks(targetVelocityTicks + delta);
+//        }
+//    }
 
     /**
      * Decrease target velocity by a fixed amount (for manual tuning)
      */
-    public void decreaseVelocity(double delta) {
-        if (activeVelocityControl) {
-            setShooterVelocityTicks(Math.max(0, targetVelocityTicks - delta));
-        }
-    }
+//    public void decreaseVelocity(double delta) {
+//        if (activeVelocityControl) {
+//            setShooterVelocityTicks(Math.max(0, targetVelocityTicks - delta));
+//        }
+//    }
 
 //    /**
 //     * Increment hood position for manual adjustment
@@ -197,7 +190,7 @@ public class Shooter extends SubsystemBase {
      * Get current shooter velocity (average of both motors) in ticks/sec.
      */
     public double getShooterVelocity() {
-        return (shooterMotor1.getVelocity() + shooterMotor2.getVelocity()) / 2.0;
+        return (arbalestL.getVelocity() + arbalestR.getVelocity()) / 2.0;
     }
 
     /**
@@ -278,14 +271,14 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-    /**
-     * Set shooter velocity directly in ticks/sec and enable closed-loop PIDF.
-     */
-    public void setShooterVelocityTicks(double velTicksPerSec) {
-        targetVelocityTicks = velTicksPerSec;
-        shooterController.setSetPoint(velTicksPerSec);
-        activeVelocityControl = true;
-    }
+//    /**
+//     * Set shooter velocity directly in ticks/sec and enable closed-loop PIDF.
+//     */
+//    public void setShooterVelocityTicks(double velTicksPerSec) {
+//        targetVelocityTicks = velTicksPerSec;
+//        shooterController.setSetPoint(velTicksPerSec);
+//        activeVelocityControl = true;
+//    }
 
     /**
      * Get desired flywheel velocity (ticks/sec) for a given distance (inches) using LUT.
@@ -299,29 +292,29 @@ public class Shooter extends SubsystemBase {
      */
     public void setShooterVelocityForDistance(double distanceInches) {
         double vel = getTargetVelocityForDistance(distanceInches);
-        vel = Range.clip(vel, 0.0, SHOOTER_MAX_VELOCITY);
-        setShooterVelocityTicks(vel);
+        vel = Range.clip(vel, 0.0, ARBALEST_MAX_POWER);
+        setArbalestVelocity((int) vel);
     }
 
     /**
      * Update flywheel closed-loop control each cycle.
      */
-    private void updateVelocityControl() {
-        if (!activeVelocityControl) {
-            return;
-        }
-
-        double currentVel = getShooterVelocity();
-
-        // The FlywheelPIDController now handles both feedforward and feedback
-        double output = shooterController.calculate(currentVel);
-
-        // Clamp output to motor range
-        output = Range.clip(output, -1.0, 1.0);
-
-        shooterMotor1.setPower(output);
-        shooterMotor2.setPower(output);
-    }
+//    private void updateVelocityControl() {
+//        if (!activeVelocityControl) {
+//            return;
+//        }
+//
+//        double currentVel = getShooterVelocity();
+//
+//        // The FlywheelPIDController now handles both feedforward and feedback
+//        double output = shooterController.calculate(currentVel);
+//
+//        // Clamp output to motor range
+//        output = Range.clip(output, -1.0, 1.0);
+//
+//        shooterMotor1.setPower(output);
+//        shooterMotor2.setPower(output);
+//    }
 //
 //    /**
 //     * Get current hood position

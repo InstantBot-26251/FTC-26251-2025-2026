@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.paths;
+package org.firstinspires.ftc.teamcode.opmodes.auto.paths;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
