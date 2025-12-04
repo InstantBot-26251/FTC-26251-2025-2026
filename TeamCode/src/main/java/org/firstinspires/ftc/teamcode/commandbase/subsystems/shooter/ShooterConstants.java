@@ -8,6 +8,11 @@ import java.util.Arrays;
 
 @Config
 public class ShooterConstants {
+
+    public static double kP = 0.1;
+    public static double kI = 0.0;
+    public static double kD = 0.0;
+    public static double kF = 0.0075;
     // Shooter power constants
     public static double SHOOTER_IDLE_POWER = 0.0;
     public static double SHOOTER_MAX_POWER = 1.0;
@@ -16,7 +21,7 @@ public class ShooterConstants {
 //    public static double HOOD_MIN_POSITION = 0.0;  // Flat/low angle
 //    public static double HOOD_MAX_POSITION = 1.0;  // Max angle // TODO: No hood for now
 
-    public static PIDFCoefficients SHOOTER_PIDF_COEFFICIENTS = new PIDFCoefficients(0.01, 0, 0, 0.01); // Coefficients for ticks
+    public static PIDFCoefficients SHOOTER_PIDF_COEFFICIENTS = new PIDFCoefficients(kP, kI, kD, kF); // Coefficients for ticks
 
     public static double SHOOTER_MAX_VELOCITY = 2000; // Ticks/sec
     public static double SHOOTER_MIN_VELOCITY = 0; // Ticks/sec

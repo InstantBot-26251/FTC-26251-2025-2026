@@ -8,14 +8,12 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
-import com.seattlesolvers.solverslib.controller.PIDFController;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.teamcode.util.FlywheelSpECialPID;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Shooter extends SubsystemBase {
@@ -33,7 +31,9 @@ public class Shooter extends SubsystemBase {
             Arrays.asList(1200.0, 1320.0, 1450.0, 1580.0, 1700.0, 1830.0, 1950.0, 2075.0, 2200.0)
     );
 
-    private PIDFController shooterController = new PIDFController(SHOOTER_PIDF_COEFFICIENTS);
+    private FlywheelSpECialPID shooterController;
+
+
     private boolean activeVelocityControl = false;
     private double targetVelocityTicks = 0.0;
     private boolean activeControl = false;
@@ -46,7 +46,11 @@ public class Shooter extends SubsystemBase {
 
     public Shooter() {
         VELOCITY_LOOKUP_TABLE.createLUT();
+
+        shooterController = new FlywheelSpECialPID(SHOOTER_PIDF_COEFFICIENTS);
         shooterController.setTolerance(SHOOTER_VEL_TOLERANCE);
+
+        shooterController.setPIDF(0.1, 0.0, 0.0, 0.0075);
     }
 
 
@@ -186,16 +190,7 @@ public class Shooter extends SubsystemBase {
      * Get the current distance to the AprilTag using vision
      */
     public double getTargetDistance() {
-        ArrayList<AprilTagDetection> detections = vision.getDetections();
-
-        if (detections != null && !detections.isEmpty()) {
-            AprilTagDetection detection = detections.get(0);
-            if (detection.ftcPose != null) {
-                return detection.ftcPose.range;
-            }
-        }
-
-        return -1.0;
+        return vision.getDistance();
     }
 
     /**
@@ -260,17 +255,6 @@ public class Shooter extends SubsystemBase {
 //    } //TODO: No hood for now
 
     /**
-     * Emergency stop - immediately stop shooter
-     */
-    public void emergencyStop() {
-        activeVelocityControl = false;
-        shooterMotor1.setPower(0);
-        shooterMotor2.setPower(0);
-        telemetry.addData("EMERGENCY STOP", "Shooter halted");
-    } // NEVER USE
-
-
-    /**
      * Automatically aim both hood and velocity based on AprilTag distance
      * sike Auto sets only velocity because no hood for now
      */
@@ -328,8 +312,11 @@ public class Shooter extends SubsystemBase {
         }
 
         double currentVel = getShooterVelocity();
+
+        // The FlywheelPIDController now handles both feedforward and feedback
         double output = shooterController.calculate(currentVel);
 
+        // Clamp output to motor range
         output = Range.clip(output, -1.0, 1.0);
 
         shooterMotor1.setPower(output);
@@ -351,7 +338,7 @@ public class Shooter extends SubsystemBase {
         if (activeVelocityControl) {
             telemetry.addData("Target Velocity", "%.0f ticks/sec", targetVelocityTicks);
             telemetry.addData("Velocity Error", "%.0f ticks/sec",
-                    targetVelocityTicks - getShooterVelocity());
+                    shooterController.getPositionError());
         }
 
 //        telemetry.addData("Hood Position", "%.3f", getHoodPosition());
@@ -368,7 +355,7 @@ public class Shooter extends SubsystemBase {
     }
 
     /**
-     * Update PIDF gains dynamically - for tuning
+     * Update PIDF dynamically - for tuning
      */
     public void updatePIDFGains(double p, double i, double d, double f) {
         shooterController.setP(p);
