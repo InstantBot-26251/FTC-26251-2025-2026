@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
+import org.firstinspires.ftc.teamcode.globals.Robot;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -13,8 +14,7 @@ import java.util.Locale;
 @TeleOp(name = "Test: Shooter Data Collection", group = "Test")
 public class ShooterDataCollector extends OpMode {
 
-    private Shooter shooter;
-    private ATVision vision;
+    private Robot robot;
 
     // Data collection
     private ArrayList<DataPoint> collectedData = new ArrayList<>();
@@ -37,8 +37,8 @@ public class ShooterDataCollector extends OpMode {
 
     @Override
     public void init() {
-        shooter = Shooter.getInstance();
-        vision = ATVision.getInstance();
+        robot = Robot.getInstance();
+        robot.teleopInit(telemetry, hardwareMap);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Instructions", "See code comments");
@@ -47,8 +47,7 @@ public class ShooterDataCollector extends OpMode {
 
     @Override
     public void start() {
-        shooter.onTeleopInit();
-        vision.onTeleopInit();
+
         buttonTimer.reset();
         velocityStableTimer.reset();
     }
@@ -105,14 +104,14 @@ public class ShooterDataCollector extends OpMode {
 
         // Apply settings
         if (gamepad1.x) {
-            shooter.setShooterVelocityTicks(currentTestVelocity);
-            shooter.setHoodPosition(currentTestHoodPosition);
+            robot.shooter.setShooterVelocityTicks(currentTestVelocity);
+//            shooter.setHoodPosition(currentTestHoodPosition);
             buttonPressed = true;
         }
 
         // Stop shooter
         if (gamepad1.b) {
-            shooter.stopShooter();
+            robot.shooter.stopShooter();
             buttonPressed = true;
         }
 
@@ -134,7 +133,7 @@ public class ShooterDataCollector extends OpMode {
     }
 
     private void updateVelocityMonitoring() {
-        double currentVel = shooter.getShooterVelocity();
+        double currentVel = robot.shooter.getShooterVelocity();
         double error = Math.abs(currentVel - currentTestVelocity);
 
         if (error < 30.0 && currentTestVelocity > 0) { // Within 30 ticks/sec
@@ -148,14 +147,14 @@ public class ShooterDataCollector extends OpMode {
     }
 
     private void saveDataPoint() {
-        double distance = shooter.getTargetDistance();
+        double distance = robot.shooter.getTargetDistance();
 
         if (distance > 0) {
             DataPoint point = new DataPoint(
                     distance,
                     currentTestVelocity,
                     currentTestHoodPosition,
-                    shooter.getShooterVelocity()
+                    robot.shooter.getShooterVelocity()
             );
             collectedData.add(point);
 
@@ -175,10 +174,10 @@ public class ShooterDataCollector extends OpMode {
         // Current settings
         telemetry.addData("--- Current Settings ---", "");
         telemetry.addData("Target Velocity", "%.0f ticks/sec", currentTestVelocity);
-        telemetry.addData("Actual Velocity", "%.0f ticks/sec", shooter.getShooterVelocity());
+        telemetry.addData("Actual Velocity", "%.0f ticks/sec", robot.shooter.getShooterVelocity());
         telemetry.addData("Hood Position", "%.4f", currentTestHoodPosition);
 
-        double distance = shooter.getTargetDistance();
+        double distance = robot.shooter.getTargetDistance();
         if (distance > 0) {
             telemetry.addData("Distance", "%.1f inches", distance);
             telemetry.addData("Ready to Save", velocityStable ? "YES (Press A)" : "NO - Stabilizing...");
@@ -249,7 +248,7 @@ public class ShooterDataCollector extends OpMode {
 
     @Override
     public void stop() {
-        shooter.stopShooter();
+        robot.shooter.stopShooter();
     }
 
     /**

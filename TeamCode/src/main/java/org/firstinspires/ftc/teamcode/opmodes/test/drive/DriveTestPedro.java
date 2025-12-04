@@ -1,19 +1,24 @@
 package org.firstinspires.ftc.teamcode.opmodes.test.drive;
 
+import static org.firstinspires.ftc.teamcode.globals.Robot.*;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
+import org.firstinspires.ftc.teamcode.commandbase.commands.TeleopDriveCommand;
+import org.firstinspires.ftc.teamcode.globals.Robot;
 
 
 @TeleOp(name = "Test: Drive Pedro", group = "Test")
 public class DriveTestPedro extends OpMode {
-    private Drive drive;
+    private Robot robot;
 
+    private GamepadEx driver;
     @Override
     public void init() {
-        drive = Drive.getInstance();
-        drive.onTeleopInit();
+        robot = Robot.getInstance();
+        robot.teleopInit(telemetry, hardwareMap);
 
         telemetry.addLine("Drive Test OpMode Initialized");
         telemetry.addLine("Controls:");
@@ -26,41 +31,48 @@ public class DriveTestPedro extends OpMode {
 
     @Override
     public void loop() {
-        double forwardSpeed = -gamepad1.left_stick_y;  // Forward/backward (inverted)
-        double strafeSpeed = gamepad1.left_stick_x;    // Left/right strafe
-        double turnSpeed = gamepad1.right_stick_x;     // Rotation
-
         // Field-centric drive
-        drive.driveFieldCentric(forwardSpeed, strafeSpeed, turnSpeed);
+        new TeleopDriveCommand(
+                () -> applyResponseCurve(driver.getLeftY(), DRIVE_SENSITIVITY),
+                () -> -applyResponseCurve(driver.getLeftX(), DRIVE_SENSITIVITY),
+                () -> -applyResponseCurve(driver.getRightX(), ROTATIONAL_SENSITIVITY) * ROTATION_DAMPEN);
 
         // Toggle slow mode with A button
         if (gamepad1.a && !lastA) {
-            drive.disableSlowMode();
+            robot.drive.disableSlowMode();
         }
         lastA = gamepad1.a;
 
         // Toggle heading lock with B button
         if (gamepad1.b && !lastB) {
-            drive.toggleHeadingLock();
+            robot.drive.toggleHeadingLock();
         }
         lastB = gamepad1.b;
 
         // Update drive subsystem
-        drive.periodic();
+        robot.drive.periodic();
 
         // Telemetry
         telemetry.addData("Drive Mode", "Field Centric");
-        telemetry.addData("Slow Mode", drive.isSlowModeEnabled() ? "ON" : "OFF");
-        telemetry.addData("Heading Lock", drive.isHeadingLockEnabled() ? "ON" : "OFF");
+        telemetry.addData("Slow Mode", robot.drive.isSlowModeEnabled() ? "ON" : "OFF");
+        telemetry.addData("Heading Lock", robot.drive.isHeadingLockEnabled() ? "ON" : "OFF");
         telemetry.addLine();
-        telemetry.addData("Position X", "%.2f", drive.getPose().getX());
-        telemetry.addData("Position Y", "%.2f", drive.getPose().getY());
-        telemetry.addData("Heading", "%.1f°", Math.toDegrees(drive.getPose().getHeading()));
+        telemetry.addData("Position X", "%.2f", robot.drive.getPose().getX());
+        telemetry.addData("Position Y", "%.2f", robot.drive.getPose().getY());
+        telemetry.addData("Heading", "%.1f°", Math.toDegrees(robot.drive.getPose().getHeading()));
         telemetry.addLine();
-        telemetry.addData("Forward", "%.2f", forwardSpeed);
-        telemetry.addData("Strafe", "%.2f", strafeSpeed);
-        telemetry.addData("Turn", "%.2f", turnSpeed);
+        telemetry.addData("Forward", "%.2f", driver.getLeftY());
+        telemetry.addData("Strafe", "%.2f", driver.getLeftX());
+        telemetry.addData("Turn", "%.2f", driver.getRightX());
         telemetry.update();
+    }
+
+    private double applyResponseCurve(double input, double scale) {
+        // Limit Input to 1 (MAX) and -1 (MIN)
+        input = Math.max(-1, Math.min(1, input));
+
+        // Apply Response Curve
+        return Math.signum(input) * Math.pow(Math.abs(input), scale);
     }
 
     // Button state tracking for toggling stuff

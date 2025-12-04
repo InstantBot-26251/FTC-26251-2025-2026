@@ -8,7 +8,6 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.Visio
 import android.util.Size;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.globals.RobotMap;
 import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -30,17 +29,7 @@ public class ATVision extends SubsystemTemplate {
     }
 
     @Override
-    public void onAutonomousInit() {
-//        telemetry = Enigma.getInstance().getTelemetry();
-
-        makeProcessor();
-        makePortal();
-    }
-
-    @Override
-    public void onTeleopInit() {
-//        telemetry = Enigma.getInstance().getTelemetry();
-
+    public void init() {
         makeProcessor();
         makePortal();
     }
@@ -87,11 +76,11 @@ public class ATVision extends SubsystemTemplate {
         if (detections != null && !detections.isEmpty()) {
             AprilTagDetection detection = detections.get(0);
             if (detection.ftcPose != null) {
-                return detection.ftcPose.range; // Distance in inches
+                return detection.ftcPose.range;
             }
         }
 
-        return -1.0; // No detection
+        return -1.0;
     }
 
     public String getMotif() {

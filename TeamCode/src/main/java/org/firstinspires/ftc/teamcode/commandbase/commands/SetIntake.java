@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
 
 public class SetIntake extends CommandBase {
 //    private final Enigma robot;

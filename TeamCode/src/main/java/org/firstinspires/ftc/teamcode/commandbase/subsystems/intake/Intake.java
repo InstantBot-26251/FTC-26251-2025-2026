@@ -5,18 +5,18 @@ import static org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intak
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commandbase.commands.SetIntake;
-import org.firstinspires.ftc.teamcode.globals.Enigma;
 import org.firstinspires.ftc.teamcode.globals.RobotMap;
-import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
-public class Intake extends SubsystemTemplate {
+public class Intake extends SubsystemBase {
     private DcMotorEx intake;
     private RevColorSensorV3 proximitySensor;
 
@@ -40,24 +40,8 @@ public class Intake extends SubsystemTemplate {
         intakeTimer.reset();
     }
 
-    @Override
-    public void onAutonomousInit() {
-//        telemetry = Enigma.getInstance().getTelemetry();
-        initHardware();
-    }
 
-    @Override
-    public void onTeleopInit() {
-//        telemetry = Enigma.getInstance().getTelemetry();
-        initHardware();
-    }
-
-    @Override
-    public void periodic() {
-        updateIntake();
-    }
-
-    public void initHardware() {
+    public void initHardware(HardwareMap hardwareMap) {
         RobotMap map = RobotMap.getInstance();
 
         intake = map.INTAKE;
@@ -66,7 +50,13 @@ public class Intake extends SubsystemTemplate {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
+    @Override
+    public void periodic() {
+        updateIntake();
+    }
+
     public void setIntake(IntakeState intakeState) {
+        Intake.intakeState = intakeState;
         switch (intakeState) {
             case STOP:
                 intake.setPower(0);
@@ -142,4 +132,3 @@ public class Intake extends SubsystemTemplate {
         );
     }
 }
-

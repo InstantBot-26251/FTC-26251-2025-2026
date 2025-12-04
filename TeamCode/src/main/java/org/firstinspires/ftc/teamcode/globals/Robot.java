@@ -7,8 +7,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.seattlesolvers.solverslib.command.InstantCommand;
-import com.seattlesolvers.solverslib.command.Robot;
-import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
@@ -24,99 +22,102 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystems.drive.Drive;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.commandbase.subsystems.shooter.Shooter;
-import org.firstinspires.ftc.teamcode.commandbase.subsystems.vision.ATVision;
 import org.firstinspires.ftc.teamcode.util.Alliance;
-import org.firstinspires.ftc.teamcode.util.SubsystemTemplate;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-
-public class Enigma extends Robot {
+public class Robot extends com.seattlesolvers.solverslib.command.Robot {
     public Alliance alliance;
 
-    public Follower follower;
-    private static Enigma INSTANCE;
+    private static final Robot instance = new Robot();
+    public static Robot getInstance() {
+        return instance;
+    }
 
     // Hardware and telemetry references
     private HardwareMap hardwareMap;
     private Telemetry telemetry;
 
-    private LynxModule hub;
+    public Follower follower;
 
     // Subsystems
     public Drive drive;
     public Shooter shooter;
     public Intake intake;
 
-    // List to track all subsystems for periodic updates
-    private final List<SubsystemTemplate> subsystems = new ArrayList<>();
 
     private GamepadEx driveController;
     private GamepadEx manipController;
 
-    private static final double DRIVE_SENSITIVITY = 1.1;
-    private static final double ROTATIONAL_SENSITIVITY = 2.0;
+    public static final double DRIVE_SENSITIVITY = 1.1;
+    public static final double ROTATIONAL_SENSITIVITY = 2.0;
     private static final double TRIGGER_DEADZONE = 0.1;
-    private static final double ROTATION_DAMPEN = 0.9;
+    public static final double ROTATION_DAMPEN = 0.9;
 
-
-    private Enigma(HardwareMap hardwareMap) {
-        reset();
-        robotInit();
-        Log.i("Enigma", "===============ROBOT CREATED SUCCESSFULLY===============");
-    }
-
-
-    // Initializes all subsystems and adds them to the list. New subsystems should be added here.
-    private void robotInit() {
-        subsystems.clear();
-        subsystems.add(Drive.getInstance().initialize());
-        subsystems.add(ATVision.getInstance().initialize());
-        subsystems.add(Shooter.getInstance().initialize());
-        subsystems.add(Intake.getInstance().initialize());
-        registerSubsystems();
-    }
-
-    private void registerSubsystems() {
-        for (SubsystemBase s : subsystems) {
-            register(s);
-        }
-    }
-
-    /**
-     * Initialize all subsystems
-     */
-    private void initSubsystems() {
-        subsystems.clear();
-
-        drive = new Drive();
-        subsystems.add(drive);
-
-        telemetry.addData("Subsystems", "Initialized (" + subsystems.size() + ")");
-    }
 
     public void autonomousInit(Telemetry telemetry, HardwareMap hardwareMap) {
         reset();
-        registerSubsystems();
 
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        this.hardwareMap = hardwareMap;
+
         RobotMap.getInstance().init(hardwareMap);
+
         for (LynxModule hub : RobotMap.getInstance().getLynxModules()) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        subsystems.forEach(SubsystemTemplate::onAutonomousInit);
-        Log.i("Enigma", "===============Autonomous Initialized==============");
+        // Initialize subsystems
+        drive = Drive.getInstance();
+        shooter = Shooter.getInstance();
+        intake = Intake.getInstance();
+
+        // Initialize hardware for each subsystem
+        drive.initHardware(hardwareMap);
+        shooter.initHardware(hardwareMap, telemetry);
+        intake.initHardware(hardwareMap);
+
+        // Register subsystems
+        register(drive, shooter, intake);
+
+        Log.i("Robot", "===============Autonomous Initialized==============");
     }
 
-    public void teleopInit(Telemetry telemetry, HardwareMap hardwareMap, Gamepad driver, Gamepad manip) {
+    public void teleopInit(Telemetry telemetry, HardwareMap hardwareMap) {
         reset();
-        registerSubsystems();
 
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        this.hardwareMap = hardwareMap;
+
         RobotMap.getInstance().init(hardwareMap);
+
+        for (LynxModule hub : RobotMap.getInstance().getLynxModules()) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
+
+        // Initializa subsystems
+        drive = Drive.getInstance();
+        shooter = Shooter.getInstance();
+        intake = Intake.getInstance();
+
+        // Initialize hardware
+        drive.initHardware(hardwareMap);
+        shooter.initHardware(hardwareMap, telemetry);
+        intake.initHardware(hardwareMap);
+
+        // REGISTRATO subsystems
+        register(drive, shooter, intake);
+
+        Log.i("Robot", "===============Teleop Initialized==============");
+    }
+
+    public void teleopInitWithControls(Telemetry telemetry, HardwareMap hardwareMap, Gamepad driver, Gamepad manip) {
+        reset();
+
+        this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        this.hardwareMap = hardwareMap;
+
+        RobotMap.getInstance().init(hardwareMap);
+
         for (LynxModule hub : RobotMap.getInstance().getLynxModules()) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
@@ -124,34 +125,45 @@ public class Enigma extends Robot {
         driveController = new GamepadEx(driver);
         manipController = new GamepadEx(manip);
 
-        subsystems.forEach(SubsystemTemplate::onTeleopInit);
+        // Initialize subsystems
+        drive = Drive.getInstance();
+        shooter = Shooter.getInstance();
+        intake = Intake.getInstance();
+
+        // Initialize hardware for each subsystem
+        drive.initHardware(hardwareMap);
+        shooter.initHardware(hardwareMap, telemetry);
+        intake.initHardware(hardwareMap);
+
+        // Register subsystems
+        register(drive, shooter, intake);
 
         /**
          *  Driver Controls
          */
-        Drive.getInstance().setDefaultCommand(new TeleopDriveCommand(
+        drive.setDefaultCommand(new TeleopDriveCommand(
                 () -> applyResponseCurve(driveController.getLeftY(), DRIVE_SENSITIVITY),
                 () -> -applyResponseCurve(driveController.getLeftX(), DRIVE_SENSITIVITY),
                 () -> -applyResponseCurve(driveController.getRightX(), ROTATIONAL_SENSITIVITY) * ROTATION_DAMPEN
         ));
 
         new Trigger(() -> driveController.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > TRIGGER_DEADZONE)
-                    .whenActive(Drive.getInstance()::enableSlowMode)
-                    .whenInactive(Drive.getInstance()::disableSlowMode);
+                .whenActive(drive::enableSlowMode)
+                .whenInactive(drive::disableSlowMode);
 
         // Reset heading
         driveController.getGamepadButton(GamepadKeys.Button.Y).whenPressed(
-                new InstantCommand(() -> drive.resetHeading())
+                new InstantCommand(drive::resetHeading)
         );
 
         // Lock current heading
         driveController.getGamepadButton(GamepadKeys.Button.A).whenPressed(
-                new InstantCommand(() -> drive.lockCurrentHeading())
+                new InstantCommand(drive::lockCurrentHeading)
         );
 
         // Toggle heading lock
         driveController.getGamepadButton(GamepadKeys.Button.B).whenPressed(
-                new InstantCommand(() -> drive.toggleHeadingLock())
+                new InstantCommand(drive::toggleHeadingLock)
         );
 
         /**
@@ -160,12 +172,12 @@ public class Enigma extends Robot {
 
         // Overrides all intake commands and stops intake
         manipController.getGamepadButton(GamepadKeys.Button.A).whenPressed(
-                new InstantCommand(() -> Intake.ActiveStopIntake())
-                );
+                Intake.ActiveStopIntake()
+        );
 
         // Intake reverse
         manipController.getGamepadButton(GamepadKeys.Button.X).whileActiveContinuous(
-            new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE))
+                new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE))
         );
 
         // Intake forward
@@ -180,33 +192,28 @@ public class Enigma extends Robot {
 
         // Hood and shooter settings auto set
         manipController.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenPressed(
-                new InstantCommand(() -> shooter.autoAim())
+                new InstantCommand(shooter::autoAim)
         );
 
-        // FULLAIM LEBRON
+        // FULL AIM LEBRON
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(
-                new InstantCommand(() -> new AIM())
+                new AIM()
         );
 
-        Log.i("Enigma", "===============Teleop Initialized==============");
-    }
-
-    public void periodic() {
-        for (SubsystemBase subsystem : subsystems) {
-            subsystem.periodic();
-        }
+        Log.i("Robot", "===============Teleop Initialized WITH CONTROLS==============");
     }
 
     //------------------------SETTERS------------------------//
 
     public void setShootHeading() {
         if (alliance == Alliance.BLUE) {
-            shootHeadingCLOSE = Math.toRadians(135); // TODO: tune
-            shootHeadingFAR = Math.toRadians(120); //  TODO: tune
+            shootHeadingCLOSE = Math.toRadians(135);
+            shootHeadingFAR = Math.toRadians(120);
         }
-        else if (alliance == Alliance.RED)
-            shootHeadingCLOSE = Math.toRadians(135); // TODO: tune
-        shootHeadingFAR = Math.toRadians(120); //  TODO: tune
+        else if (alliance == Alliance.RED) {
+            shootHeadingCLOSE = Math.toRadians(135);
+            shootHeadingFAR = Math.toRadians(120);
+        }
     }
 
     //------------------------GETTERS------------------------//
@@ -231,9 +238,7 @@ public class Enigma extends Robot {
         input = Math.max(-1, Math.min(1, input));
 
         // Apply Response Curve
-        double output = Math.signum(input) * Math.pow(Math.abs(input), scale);
-
-        return output;
+        return Math.signum(input) * Math.pow(Math.abs(input), scale);
     }
 
 }
