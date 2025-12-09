@@ -7,6 +7,20 @@ repositories {
     // Pedro Pathing
     maven { url = "https://mymaven.bylazar.com/releases" }
 
+    maven {
+        url "https://repo.dairy.foundation/releases"
+    }
+    maven {
+        url "https://repo.dairy.foundation/snapshots"
+    }
+
+    maven { url = 'https://central.sonatype.com/repository/maven-snapshots/'}
+}
+
+configurations.all {
+    resolutionStrategy {
+        cacheChangingModulesFor 10, 'minutes'
+    }
 }
 
 dependencies {
@@ -20,7 +34,9 @@ dependencies {
     implementation 'org.firstinspires.ftc:Vision:11.0.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
 
-    implementation 'com.acmerobotics.dashboard:dashboard:0.4.17'
-    implementation 'com.bylazar:fullpanels:1.0.6'
+    implementation 'com.pedropathing:ivy:0.0.1-SNAPSHOT'
+
+    implementation 'com.acmerobotics.dashboard:dashboard:0.5.1'
+    implementation 'com.bylazar:fullpanels:1.0.7'
 }
 
