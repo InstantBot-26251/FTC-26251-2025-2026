@@ -31,7 +31,7 @@ public class RobotE {
     private final LynxModule hub;
 
     // Telemetry
-    private Telemetry telemetry;
+    public Telemetry telemetry;
 
     // Alliance
     public Alliance alliance;
@@ -43,7 +43,7 @@ public class RobotE {
     // Heading lock
     private double targetHeading = Math.toRadians(180);
     private PIDFController headingLockPID;
-    private boolean headingLockEnabled = false;
+    public boolean headingLockEnabled = false;
 
     // Gamepads (only for teleop)
     private GamepadEx driveController;
@@ -120,14 +120,14 @@ public class RobotE {
         intake.setIDLE();
         ilc.forceIdle();
 
-        bindControls();
+//        bindControls();
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
         this.telemetry.update();
     }
 
-    private void bindControls() {
+    public void bindControls() {
         // Slow mode toggle
         new Trigger(() ->
                 driveController.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > TRIGGER_DEADZONE)
