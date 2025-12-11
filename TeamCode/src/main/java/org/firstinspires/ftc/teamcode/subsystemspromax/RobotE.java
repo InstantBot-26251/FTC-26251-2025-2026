@@ -10,6 +10,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
@@ -59,6 +60,17 @@ public class RobotE {
     private boolean slowModeEnabled = false;
     private static final double SLOW_MODE_MULTIPLIER = 0.3;
 
+    private final PIDFController headingController;
+
+    private final double goalX;
+    private final double goalY;
+
+    private double targetHeadingL = 0.0;
+    private double lockedHeading = 0.0;
+    private boolean isLocked = false;
+
+    private static final double HEADING_TOLERANCE = Math.toRadians(2.0);
+
     public RobotE(HardwareMap hardwareMap, Alliance alliance) {
         this.alliance = alliance;
 
@@ -71,8 +83,13 @@ public class RobotE {
         hub = hardwareMap.getAll(LynxModule.class).get(0);
         hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
 
+        goalX = 144;
+        goalY = 144;
+
         // Initialize heading lock PID
         headingLockPID = new PIDFController(follower.constants.coefficientsHeadingPIDF);
+        // Initialize aim PID
+        headingController = new PIDFController(follower.constants.coefficientsHeadingPIDF);
 
         loopTimer.resetTimer();
     }
@@ -136,72 +153,51 @@ public class RobotE {
 
         // Reset heading to 180° (or 0° depending on alliance)
         driveController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> {
-                    double resetAngle = alliance == Alliance.BLUE ? Math.toRadians(180) : 0;
-                    follower.setPose(new Pose(follower.getPose().getX(), follower.getPose().getY(), resetAngle));
-                    targetHeading = resetAngle;
-                });
+                .whenPressed(new InstantCommand(() -> resetHeading()));
 
         // Toggle heading lock
         driveController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(() -> {
-                    headingLockEnabled = !headingLockEnabled;
-                    if (headingLockEnabled) {
-                        targetHeading = follower.getPose().getHeading();
-                    }
-                });
+                .whenPressed(new InstantCommand(() -> toggleHeadingLock()));
+
+
+        // Auto Aim
+        driveController.getGamepadButton(GamepadKeys.Button.B)
+                        .whileHeld(
+                                new InstantCommand(() -> autoAim()))
+                        .whenReleased(
+                                new InstantCommand(() -> disableAutoAim())
+                        );
 
         // Toggle intake
         manipController.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(() -> {
-                    if (intake.getIntakeState() == IntakeState.IDLE) {
-                        intake.setIntake(IntakeState.INTAKING);
-                    } else {
-                        intake.setIDLE();
-                    }
-                });
+                .whenPressed(new InstantCommand(() -> toggleIntake()));
 
         // Stop intake
         manipController.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(() -> intake.setIDLE());
+                .whenPressed(new InstantCommand(() -> intake.setIDLE()));
 
         // Reverse intake - hold to reverse
         manipController.getGamepadButton(GamepadKeys.Button.Y)
-                .whileHeld(() -> intake.setIntake(IntakeState.REVERSE))
-                .whenReleased(() -> intake.setIntake(IntakeState.INTAKING));
+                .whileHeld(new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE)))
+                .whenReleased(new InstantCommand(() -> intake.setIntake(IntakeState.INTAKING)));
 
         // Spin up ILC and shoot sequence
         manipController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(() -> {
-                    if (ilc.isIdle()) {
-                        // Start spinup
-                        ilc.startSpinup();
-                    } else if (ilc.isReady()) {
-                        // If ready, shoot
-                        ilc.shoot();
-                        intake.setIntake(IntakeState.TRANSFERRING);
-                    }
-                });
+                .whenPressed(new InstantCommand(() -> handleILCAction()));
 
         // Stop ILC
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> {
-                    if (!ilc.isIdle()) {
-                        ilc.forceIdle();
-                        intake.setIDLE();
-                    }
-                });
+                .whenPressed(new InstantCommand(() -> stopILC()));
 
         // Manual gate control
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> ilc.gateLaunch());
+                .whenPressed(new InstantCommand(() -> ilc.gateLaunch()));
 
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(() -> ilc.gateStop());
+                .whenPressed(new InstantCommand(() -> ilc.gateStop()));
     }
 
     public void handleTeleopControls() {
-        if (driveController == null) return;
 
         // Read all buttons
         driveController.readButtons();
@@ -250,6 +246,44 @@ public class RobotE {
         endPose = follower.getPose();
     }
 
+    private void resetHeading() {
+        double resetAngle = alliance == Alliance.BLUE ? Math.toRadians(180) : 0;
+        follower.setPose(new Pose(follower.getPose().getX(), follower.getPose().getY(), resetAngle));
+        targetHeading = resetAngle;
+    }
+
+    private void toggleHeadingLock() {
+        headingLockEnabled = !headingLockEnabled;
+        if (headingLockEnabled) {
+            targetHeading = follower.getPose().getHeading();
+        }
+    }
+
+    private void toggleIntake() {
+        if (intake.getIntakeState() == IntakeState.IDLE) {
+            intake.setIntake(IntakeState.INTAKING);
+        } else {
+            intake.setIDLE();
+        }
+    }
+
+    private void handleILCAction() {
+        if (ilc.isIdle()) {
+            // Start spinup
+            ilc.startSpinup();
+        } else if (ilc.isReady()) {
+            // If ready, shoot
+            ilc.shoot();
+            intake.setIntake(IntakeState.TRANSFERRING);
+        }
+    }
+
+    private void stopILC() {
+        if (!ilc.isIdle()) {
+            ilc.forceIdle();
+            intake.setIDLE();
+        }
+    }
 
     // Response Curve Method
     private double applyResponseCurve(double input, double scale) {
@@ -258,5 +292,68 @@ public class RobotE {
 
         // Apply Response Curve
         return Math.signum(input) * Math.pow(Math.abs(input), scale);
+    }
+
+    public double autoAim() {
+        Pose pose = follower.getPose();
+        double robotX = pose.getX();
+        double robotY = pose.getY();
+        double robotHeading = pose.getHeading();
+
+        double error;
+
+        // If not locked yet, calculate heading to goal
+        if (!isLocked) {
+            targetHeading = Math.atan2(goalY - robotY, goalX - robotX);
+            error = angleWrap(targetHeading - robotHeading);
+
+            // Check if aligned - lock the heading
+            if (Math.abs(error) < HEADING_TOLERANCE) {
+                lockedHeading = robotHeading;
+                isLocked = true;
+            }
+        } else {
+            // Maintain locked heading
+            error = angleWrap(lockedHeading - robotHeading);
+        }
+
+        // Calculate turn power
+        headingController.setCoefficients(follower.constants.coefficientsHeadingPIDF);
+        headingController.updateError(error);
+
+        return clampTurn(headingController.run());
+    }
+
+    public void disableAutoAim() {
+        isLocked = false;
+        headingController.reset();
+    }
+
+    public boolean isLocked() {
+        return isLocked;
+    }
+
+    public double getTargetDistance() {
+        // Try vision first
+        double visionDistance = ilc.getDistance();
+        if (visionDistance > 0) {
+            return visionDistance;
+        }
+
+        // Fallback to odometry
+        Pose pose = follower.getPose();
+        double dx = goalX - pose.getX();
+        double dy = goalY - pose.getY();
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private static double angleWrap(double angle) {
+        while (angle > Math.PI)  angle -= 2.0 * Math.PI;
+        while (angle < -Math.PI) angle += 2.0 * Math.PI;
+        return angle;
+    }
+
+    private double clampTurn(double turn) {
+        return Math.max(-0.5, Math.min(0.5, turn));
     }
 }
