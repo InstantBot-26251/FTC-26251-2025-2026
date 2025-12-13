@@ -59,11 +59,15 @@ public class Intake extends SubsystemBase {
 
     // SETTERS
     public void setIDLE() {
-        intake.setPower(IDLE);
-        if (!transferControlledByILC) {
-            transfer.setPower(IDLE);
-        }
         setIntake(IntakeState.IDLE);
+    }
+
+    public void setIntaking() {
+        setIntake(IntakeState.INTAKING);
+    }
+
+    public void setReversing() {
+        setIntake(IntakeState.REVERSE);
     }
 
     public void setIntake(IntakeState intakeState) {

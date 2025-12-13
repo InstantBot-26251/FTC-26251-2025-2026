@@ -31,7 +31,6 @@ public class RobotE {
     public final Follower follower;
 
     // Commands
-    private IntakeCommand intakeCommand;
     private ShootSequenceCommand shootCommand;
 
     // Hardware
@@ -86,7 +85,6 @@ public class RobotE {
         follower = Constants.createFollower(hardwareMap);
 
         // Initialize commands
-        intakeCommand = new IntakeCommand(intake);
         shootCommand = new ShootSequenceCommand(ilc, intake);
 
         // Initialize hardware
@@ -178,26 +176,16 @@ public class RobotE {
         // === INTAKE CONTROLS ===
         // Toggle intake command - B button
         manipController.getGamepadButton(GamepadKeys.Button.B)
-                .toggleWhenPressed(intakeCommand);
+                .toggleWhenPressed(new InstantCommand(intake::setIntaking), new InstantCommand(intake::setIDLE));
 
         // Stop intake - X button
         manipController.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(new InstantCommand(() -> {
-                    intakeCommand.cancel();
-                    intake.setIDLE();
-                }));
+                .whenPressed(new InstantCommand(intake::setIDLE));
 
         // Manual reverse - hold Y to reverse
         manipController.getGamepadButton(GamepadKeys.Button.Y)
-                .whileHeld(new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE)))
-                .whenReleased(new InstantCommand(() -> {
-                    // If intake command was running, restart it, otherwise go idle
-                    if (intakeCommand.isScheduled()) {
-                        intake.setIntake(IntakeState.INTAKING);
-                    } else {
-                        intake.setIDLE();
-                    }
-                }));
+                .whileHeld(new InstantCommand(intake::setReversing))
+                .whenReleased(new InstantCommand(intake::setIDLE));
 
         // === SHOOTING CONTROLS ===
         // Full shooting sequence - A button
@@ -285,7 +273,6 @@ public class RobotE {
 
     public void stop() {
         endPose = follower.getPose();
-        intakeCommand.cancel();
         shootCommand.cancel();
         ilc.forceIdle();  // Return control to intake on stop
     }
