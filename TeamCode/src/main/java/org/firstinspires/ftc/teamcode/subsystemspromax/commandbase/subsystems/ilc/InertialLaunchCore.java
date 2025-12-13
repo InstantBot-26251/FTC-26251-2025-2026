@@ -67,9 +67,21 @@ public class InertialLaunchCore extends SubsystemBase {
     // PERIODIC UPDATE
     public void periodic() {
         update();
-        if (isILCActivated) {
+        if (isILCActivated && ilcState != ILCState.MANUAL_FIRE) {
             updateVelocityPID();
         }
+    }
+
+    public void manualFire() {
+        ilcState = ILCState.MANUAL_FIRE;
+        targetVelocity = 1000;
+        setTarget(targetVelocity);
+    }
+
+    public void manualStop() {
+        ilcState = ILCState.IDLE;
+        deactivateILC();
+        setPower(0);
     }
 
     // STATE MACHINE UPDATE
@@ -79,6 +91,9 @@ public class InertialLaunchCore extends SubsystemBase {
                 // waiting for startSpinup() command
                 break;
 
+            case MANUAL_FIRE:
+
+                break;
             case REVERSING:
                 // Check if reverse time is complete
                 if (stateTimer.seconds() >= TRANSFER_REVERSE_TIME) {

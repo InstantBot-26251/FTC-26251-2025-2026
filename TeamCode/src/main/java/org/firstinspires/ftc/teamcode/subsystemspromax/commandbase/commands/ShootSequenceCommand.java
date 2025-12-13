@@ -20,19 +20,19 @@ public class ShootSequenceCommand extends SequentialCommandGroup {
                 new InstantCommand(() -> intake.setIntake(IntakeState.IDLE)),
 
                 // Step 2: Start the spinup sequence (transfer reverse + flywheel spinup)
-                new InstantCommand(() -> ilc.startSpinup()),
+                new InstantCommand(ilc::startSpinup),
 
                 // Step 3: Wait until ILC is ready (flywheel at target velocity)
-                new WaitUntilCommand(() -> ilc.isReady()),
+                new WaitUntilCommand(ilc::isReady),
 
                 // Step 4: Fire the shot (transfer forward)
-                new InstantCommand(() -> ilc.shoot()),
+                new InstantCommand(ilc::shoot),
 
                 // Step 5: Wait for the shot to complete
                 new WaitCommand(SHOT_DURATION),
 
                 // Step 6: Stop shooting and return to idle
-                new InstantCommand(() -> ilc.stopShooting())
+                new InstantCommand(ilc::stopShooting)
         );
     }
 }

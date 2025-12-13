@@ -9,6 +9,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.Trigger;
@@ -32,7 +33,6 @@ public class RobotE {
 
     // Commands
     private IntakeCommand intakeCommand;
-    private ShootSequenceCommand shootCommand;
 
     // Hardware
     private final LynxModule hub;
@@ -87,7 +87,6 @@ public class RobotE {
 
         // Initialize commands
         intakeCommand = new IntakeCommand(intake);
-        shootCommand = new ShootSequenceCommand(ilc, intake);
 
         // Initialize hardware
         hub = hardwareMap.getAll(LynxModule.class).get(0);
@@ -198,40 +197,42 @@ public class RobotE {
         // === SHOOTING CONTROLS ===
         // Full shooting sequence - A button
         manipController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(shootCommand);
+                .whileHeld(new InstantCommand((() -> ilc.setPower(0.75))));
 
-        // Emergency stop / force idle - Left bumper
-        manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(new InstantCommand(() -> {
-                    shootCommand.cancel();
-                    ilc.forceIdle();
-                    intake.setIDLE();
-                }));
+        manipController.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                        .whenReleased(new InstantCommand(() -> ilc.setPower(0)));
 
-        // Manual ILC control (for testing/tuning)
-        // DPAD_UP: Start spinup only
-        manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isIdle()) {
-                        ilc.startSpinup();
-                    }
-                }));
+//        // Emergency stop / force idle - Left bumper
+//        manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+//                .whenPressed(new InstantCommand(() -> {
+//                    ilc.forceIdle();
+//                    intake.setIDLE();
+//                }));
 
-        // DPAD_DOWN: Manual shoot (if ready)
-        manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isReady()) {
-                        ilc.shoot();
-                    }
-                }));
+//        // Manual ILC control (for testing/tuning)
+//        // DPAD_UP: Start spinup only
+//        manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+//                .whenPressed(new InstantCommand(() -> {
+//                    if (ilc.isIdle()) {
+//                        ilc.startSpinup();
+//                    }
+//                }));
 
-        // DPAD_RIGHT: Stop shooting
-        manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isShooting()) {
-                        ilc.stopShooting();
-                    }
-                }));
+//        // DPAD_DOWN: Manual shoot (if ready)
+//        manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+//                .whenPressed(new InstantCommand(() -> {
+//                    if (ilc.isReady()) {
+//                        ilc.shoot();
+//                    }
+//                }));
+//
+//        // DPAD_RIGHT: Stop shooting
+//        manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+//                .whenPressed(new InstantCommand(() -> {
+//                    if (ilc.isShooting()) {
+//                        ilc.stopShooting();
+//                    }
+//                }));
     }
 
     public void handleTeleopControls() {
@@ -282,7 +283,6 @@ public class RobotE {
     public void stop() {
         endPose = follower.getPose();
         intakeCommand.cancel();
-        shootCommand.cancel();
     }
 
     private void resetHeading() {
