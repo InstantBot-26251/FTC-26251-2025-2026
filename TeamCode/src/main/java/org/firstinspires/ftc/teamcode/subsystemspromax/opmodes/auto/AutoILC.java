@@ -123,7 +123,7 @@ public class AutoILC extends OpMode {
         // Initialize subsystems
         follower = Constants.createFollower(hardwareMap);
         intake = new Intake(hardwareMap);
-        ilc = new InertialLaunchCore(hardwareMap, intake);
+        ilc = new InertialLaunchCore(hardwareMap);
 
 
         // Build paths
