@@ -17,12 +17,12 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.commands.ShootSequenceCommand;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc.InertialLaunchCore;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.Intake;
+import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.IntakeState;
 import org.firstinspires.ftc.teamcode.util.Alliance;
-
-import java.util.List;
 
 public class RobotE {
     // Subsystems
@@ -31,10 +31,11 @@ public class RobotE {
     public final Follower follower;
 
     // Commands
+    private IntakeCommand intakeCommand;
     private ShootSequenceCommand shootCommand;
 
     // Hardware
-    private final List<LynxModule> hubs;
+    private final LynxModule hub;
 
     // Telemetry
     public Telemetry telemetry;
@@ -44,6 +45,7 @@ public class RobotE {
 
     // State
     public static Pose endPose;
+    private final Timer loopTimer = new Timer();
 
     // Heading lock
     private double targetHeading = Math.toRadians(180);
@@ -80,17 +82,16 @@ public class RobotE {
 
         // Initialize subsystems
         intake = new Intake(hardwareMap);
-        ilc = new InertialLaunchCore(hardwareMap, intake);
+        ilc = new InertialLaunchCore(hardwareMap);
         follower = Constants.createFollower(hardwareMap);
 
         // Initialize commands
+        intakeCommand = new IntakeCommand(intake);
         shootCommand = new ShootSequenceCommand(ilc, intake);
 
         // Initialize hardware
-        hubs = hardwareMap.getAll(LynxModule.class);
-        for (LynxModule hub : hubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
-        }
+        hub = hardwareMap.getAll(LynxModule.class).get(0);
+        hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
 
         goalX = 144;
         goalY = 144;
@@ -99,11 +100,13 @@ public class RobotE {
         headingLockPID = new PIDFController(follower.constants.coefficientsHeadingPIDF);
         // Initialize aim PID
         headingController = new PIDFController(follower.constants.coefficientsHeadingPIDF);
+
+        loopTimer.resetTimer();
     }
 
     // Autonomous init
     public void onAutoInit(Telemetry telemetry, HardwareMap hardwareMap, Pose startPose) {
-// Setup telemetry
+        // Setup telemetry
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Set starting pose
@@ -114,7 +117,6 @@ public class RobotE {
 
         // Reset subsystems
         intake.setIDLE();
-        intake.resumeTransferControl();  // Make sure intake has control initially
         ilc.forceIdle();
 
         this.telemetry.addLine("Auto Initialized");
@@ -130,6 +132,7 @@ public class RobotE {
         this.driveController = new GamepadEx(gamepad1);
         this.manipController = new GamepadEx(gamepad2);
 
+
         follower.setPose(new Pose(0, 0, Math.toRadians(180)));
         follower.startTeleopDrive();
 
@@ -139,8 +142,9 @@ public class RobotE {
 
         // Reset subsystems
         intake.setIDLE();
-        intake.resumeTransferControl();  // Make sure intake has control initially
         ilc.forceIdle();
+//
+//        bindControls();
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
@@ -170,16 +174,26 @@ public class RobotE {
         // === INTAKE CONTROLS ===
         // Toggle intake command - B button
         manipController.getGamepadButton(GamepadKeys.Button.B)
-                .toggleWhenPressed(new InstantCommand(intake::setIntaking), new InstantCommand(intake::setIDLE));
+                .toggleWhenPressed(intakeCommand);
 
         // Stop intake - X button
         manipController.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(new InstantCommand(intake::setIDLE));
+                .whenPressed(new InstantCommand(() -> {
+                    intakeCommand.cancel();
+                    intake.setIDLE();
+                }));
 
         // Manual reverse - hold Y to reverse
         manipController.getGamepadButton(GamepadKeys.Button.Y)
-                .whileHeld(new InstantCommand(intake::setReversing))
-                .whenReleased(new InstantCommand(intake::setIDLE));
+                .whileHeld(new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE)))
+                .whenReleased(new InstantCommand(() -> {
+                    // If intake command was running, restart it, otherwise go idle
+                    if (intakeCommand.isScheduled()) {
+                        intake.setIntake(IntakeState.INTAKING);
+                    } else {
+                        intake.setIDLE();
+                    }
+                }));
 
         // === SHOOTING CONTROLS ===
         // Full shooting sequence - A button
@@ -190,7 +204,7 @@ public class RobotE {
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     shootCommand.cancel();
-                    ilc.forceIdle();  // This will return transfer control to intake
+                    ilc.forceIdle();
                     intake.setIDLE();
                 }));
 
@@ -198,25 +212,25 @@ public class RobotE {
         // DPAD_UP: Start spinup only
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(() -> {
-                    // Force idle first to reset state, then activate and start spinup
-                    ilc.forceIdle();  // This resets to IDLE and returns control to intake
-                    ilc.activateILC();  // Make sure ILC is activated
-                    ilc.startSpinup();  // This will take control from intake and start sequence
+                    if (ilc.isIdle()) {
+                        ilc.startSpinup();
+                    }
                 }));
 
         // DPAD_DOWN: Manual shoot (if ready)
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(() -> {
-                    // Only shoot if actually ready
                     if (ilc.isReady()) {
                         ilc.shoot();
                     }
                 }));
 
-        // DPAD_RIGHT: Stop shooting and return control to intake
+        // DPAD_RIGHT: Stop shooting
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(new InstantCommand(() -> {
-                    ilc.forceIdle();  // This will return transfer control to intake
+                    if (ilc.isShooting()) {
+                        ilc.stopShooting();
+                    }
                 }));
     }
 
@@ -250,13 +264,13 @@ public class RobotE {
     }
 
     public void periodic() {
-        for (LynxModule hub : hubs) {
-            hub.clearBulkCache();
-        }
-
         follower.update();
         ilc.periodic();
         intake.periodic();
+
+        if (loopTimer.getElapsedTime() % 5 == 0) {
+            hub.clearBulkCache();
+        }
 
         double error = targetHeading - follower.getHeading();
         headingLockPID.setCoefficients(follower.constants.coefficientsHeadingPIDF);
@@ -267,8 +281,8 @@ public class RobotE {
 
     public void stop() {
         endPose = follower.getPose();
+        intakeCommand.cancel();
         shootCommand.cancel();
-        ilc.forceIdle();  // Return control to intake on stop
     }
 
     private void resetHeading() {
@@ -333,6 +347,12 @@ public class RobotE {
     }
 
     public double getTargetDistance() {
+//        // Try vision first
+//        double visionDistance = ilc.getDistance();
+//        if (visionDistance > 0) {
+//            return visionDistance;
+//        }
+
         // Fallback to odometry
         Pose pose = follower.getPose();
         double dx = goalX - pose.getX();

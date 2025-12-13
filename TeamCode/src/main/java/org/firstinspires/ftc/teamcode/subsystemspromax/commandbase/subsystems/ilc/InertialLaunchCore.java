@@ -11,10 +11,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.Intake;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -22,7 +20,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.ArrayList;
 
 @Config
-public class InertialLaunchCore extends SubsystemBase {
+public class InertialLaunchCore {
 //    // Vision
 //    private AprilTagProcessor aprilTag;
 //    private VisionPortal visionPortal;
@@ -46,14 +44,15 @@ public class InertialLaunchCore extends SubsystemBase {
     private ElapsedTime stateTimer = new ElapsedTime();
     private double targetVelocity = 0;
 
-    private Intake intake;  // Reference to intake subsystem
 
-    public InertialLaunchCore(HardwareMap hardwareMap, Intake intake) {
-        this.intake = intake;
-
-        ilcAlpha = hardwareMap.get(DcMotorEx.class, "ilcL");
+    public InertialLaunchCore(HardwareMap hardwareMap) {
+        ilcAlpha = hardwareMap.get(DcMotorEx.class, "ilcL"); // ILC dual motors
         ilcBeta = hardwareMap.get(DcMotorEx.class, "ilcR");
-        transfer = hardwareMap.get(DcMotorEx.class, "transfer");
+//        arducam = hardwareMap.get(WebcamName.class, "arducam");
+        transfer = hardwareMap.get(DcMotorEx.class, "transfer"); // Get transfer motor
+
+//        makePortal();
+//        makeProcessor();
 
         ilcAlpha.setDirection(DcMotorSimple.Direction.REVERSE);
         transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -63,7 +62,6 @@ public class InertialLaunchCore extends SubsystemBase {
         setPower(0);
         setTransferPower(0);
     }
-
 
     // PERIODIC UPDATE
     public void periodic() {
@@ -147,22 +145,19 @@ public class InertialLaunchCore extends SubsystemBase {
 
     // AUTO
     // COMMANDS FOR AUTO
-        public void startSpinup() {
-            if (ilcState == ILCState.IDLE) {
-                // Take control of transfer from intake
-                if (intake != null) {
-                    intake.releaseTransferControl();
-                }
+    public void startSpinup() {
+        if (ilcState == ILCState.IDLE) {
+//            double distance = getDistance();
+//            targetVelocity = interpolateRPM(distance);
+            targetVelocity = CLOSEVELOCITY;
+            setTarget(targetVelocity);
 
-                targetVelocity = CLOSEVELOCITY;
-                setTarget(targetVelocity);
-
-                setTransferPower(TRANSFER_REVERSE_POWER);
-                stateTimer.reset();
-                ilcState = ILCState.REVERSING;
-            }
+            // Start reverse sequence
+            setTransferPower(TRANSFER_REVERSE_POWER);
+            stateTimer.reset();
+            ilcState = ILCState.REVERSING;
         }
-
+    }
 
 //    public void startSpinupWithDistance(double distance) {
 //        if (ilcState == ILCState.IDLE) {
@@ -199,33 +194,15 @@ public class InertialLaunchCore extends SubsystemBase {
     public void stopShooting() {
         if (ilcState == ILCState.SHOOTING) {
             setTransferPower(0);
-            setPower(0);
-            target = 0;
+            deactivateILC();
             ilcState = ILCState.IDLE;
-            // Don't deactivate - keep it ready for next shot
         }
     }
 
-    // Separate method to fully stop everything
-    public void fullStop() {
+    public void forceIdle() {
         deactivateILC();
         setTransferPower(0);
-        setPower(0);
-        target = 0;
         ilcState = ILCState.IDLE;
-    }
-
-    // Update forceIdle to return control
-    public void forceIdle() {
-        setTransferPower(0);
-        setPower(0);
-        target = 0;
-        ilcState = ILCState.IDLE;
-
-        // Return control to intake
-        if (intake != null) {
-            intake.resumeTransferControl();
-        }
     }
 
     // QUERY METHODS
