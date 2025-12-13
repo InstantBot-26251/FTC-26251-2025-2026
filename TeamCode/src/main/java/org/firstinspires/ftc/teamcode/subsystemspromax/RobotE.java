@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystemspromax;
 
-
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.pedropathing.control.PIDFController;
@@ -17,6 +16,8 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.commands.IntakeCommand;
+import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.commands.ShootSequenceCommand;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc.InertialLaunchCore;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.IntakeState;
@@ -27,6 +28,10 @@ public class RobotE {
     public final Intake intake;
     public final InertialLaunchCore ilc;
     public final Follower follower;
+
+    // Commands
+    private IntakeCommand intakeCommand;
+    private ShootSequenceCommand shootCommand;
 
     // Hardware
     private final LynxModule hub;
@@ -79,6 +84,10 @@ public class RobotE {
         ilc = new InertialLaunchCore(hardwareMap);
         follower = Constants.createFollower(hardwareMap);
 
+        // Initialize commands
+        intakeCommand = new IntakeCommand(intake);
+        shootCommand = new ShootSequenceCommand(ilc, intake);
+
         // Initialize hardware
         hub = hardwareMap.getAll(LynxModule.class).get(0);
         hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -119,7 +128,6 @@ public class RobotE {
         // Setup telemetry
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-
         this.driveController = new GamepadEx(gamepad1);
         this.manipController = new GamepadEx(gamepad2);
 
@@ -132,12 +140,11 @@ public class RobotE {
         headingLockEnabled = false; // Start disabled, user can toggle
         targetHeading = follower.getPose().getHeading();
 
-
         // Reset subsystems
         intake.setIDLE();
         ilc.forceIdle();
 
-//        bindControls();
+        bindControls();
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
@@ -159,46 +166,75 @@ public class RobotE {
         driveController.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(new InstantCommand(() -> toggleHeadingLock()));
 
-
         // Auto Aim
         driveController.getGamepadButton(GamepadKeys.Button.B)
-                        .whileHeld(
-                                new InstantCommand(() -> autoAim()))
-                        .whenReleased(
-                                new InstantCommand(() -> disableAutoAim())
-                        );
+                .whileHeld(new InstantCommand(() -> autoAim()))
+                .whenReleased(new InstantCommand(() -> disableAutoAim()));
 
-        // Toggle intake
+        // === INTAKE CONTROLS ===
+        // Toggle intake command - B button
         manipController.getGamepadButton(GamepadKeys.Button.B)
-                .whenPressed(new InstantCommand(() -> toggleIntake()));
+                .toggleWhenPressed(intakeCommand);
 
-        // Stop intake
+        // Stop intake - X button
         manipController.getGamepadButton(GamepadKeys.Button.X)
-                .whenPressed(new InstantCommand(() -> intake.setIDLE()));
+                .whenPressed(new InstantCommand(() -> {
+                    intakeCommand.cancel();
+                    intake.setIDLE();
+                }));
 
-        // Reverse intake - hold to reverse
+        // Manual reverse - hold Y to reverse
         manipController.getGamepadButton(GamepadKeys.Button.Y)
                 .whileHeld(new InstantCommand(() -> intake.setIntake(IntakeState.REVERSE)))
-                .whenReleased(new InstantCommand(() -> intake.setIntake(IntakeState.INTAKING)));
+                .whenReleased(new InstantCommand(() -> {
+                    // If intake command was running, restart it, otherwise go idle
+                    if (intakeCommand.isScheduled()) {
+                        intake.setIntake(IntakeState.INTAKING);
+                    } else {
+                        intake.setIDLE();
+                    }
+                }));
 
-        // Spin up ILC and shoot sequence
+        // === SHOOTING CONTROLS ===
+        // Full shooting sequence - A button
         manipController.getGamepadButton(GamepadKeys.Button.A)
-                .whenPressed(new InstantCommand(() -> handleILCAction()));
+                .whenPressed(shootCommand);
 
-        // Stop ILC
+        // Emergency stop / force idle - Left bumper
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(new InstantCommand(() -> stopILC()));
+                .whenPressed(new InstantCommand(() -> {
+                    shootCommand.cancel();
+                    ilc.forceIdle();
+                    intake.setIDLE();
+                }));
 
-        // Manual gate control
+        // Manual ILC control (for testing/tuning)
+        // DPAD_UP: Start spinup only
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(() -> ilc.gateLaunch()));
+                .whenPressed(new InstantCommand(() -> {
+                    if (ilc.isIdle()) {
+                        ilc.startSpinup();
+                    }
+                }));
 
+        // DPAD_DOWN: Manual shoot (if ready)
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(() -> ilc.gateStop()));
+                .whenPressed(new InstantCommand(() -> {
+                    if (ilc.isReady()) {
+                        ilc.shoot();
+                    }
+                }));
+
+        // DPAD_RIGHT: Stop shooting
+        manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new InstantCommand(() -> {
+                    if (ilc.isShooting()) {
+                        ilc.stopShooting();
+                    }
+                }));
     }
 
     public void handleTeleopControls() {
-
         // Read all buttons
         driveController.readButtons();
         manipController.readButtons();
@@ -239,11 +275,12 @@ public class RobotE {
         double error = targetHeading - follower.getHeading();
         headingLockPID.setCoefficients(follower.constants.coefficientsHeadingPIDF);
         headingLockPID.updateError(error);
-
     }
 
     public void stop() {
         endPose = follower.getPose();
+        intakeCommand.cancel();
+        shootCommand.cancel();
     }
 
     private void resetHeading() {
@@ -256,32 +293,6 @@ public class RobotE {
         headingLockEnabled = !headingLockEnabled;
         if (headingLockEnabled) {
             targetHeading = follower.getPose().getHeading();
-        }
-    }
-
-    private void toggleIntake() {
-        if (intake.getIntakeState() == IntakeState.IDLE) {
-            intake.setIntake(IntakeState.INTAKING);
-        } else {
-            intake.setIDLE();
-        }
-    }
-
-    private void handleILCAction() {
-        if (ilc.isIdle()) {
-            // Start spinup
-            ilc.startSpinup();
-        } else if (ilc.isReady()) {
-            // If ready, shoot
-            ilc.shoot();
-            intake.setIntake(IntakeState.TRANSFERRING);
-        }
-    }
-
-    private void stopILC() {
-        if (!ilc.isIdle()) {
-            ilc.forceIdle();
-            intake.setIDLE();
         }
     }
 
@@ -348,7 +359,7 @@ public class RobotE {
     }
 
     private static double angleWrap(double angle) {
-        while (angle > Math.PI)  angle -= 2.0 * Math.PI;
+        while (angle > Math.PI) angle -= 2.0 * Math.PI;
         while (angle < -Math.PI) angle += 2.0 * Math.PI;
         return angle;
     }

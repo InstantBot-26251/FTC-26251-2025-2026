@@ -1,8 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc;
 
 public enum ILCState {
-    IDLE,           // Not doing anything
-    SPINNING_UP,    // Flywheels spinning to target velocity
-    READY,          // At target velocity, waiting for shoot command
-    SHOOTING        // Gate open, transfer running
+    IDLE,           // Not shooting, motors off
+    REVERSING,      // Transfer running in reverse briefly
+    SPINNING_UP,    // Flywheel spinning up to target velocity
+    READY,          // At target velocity, ready to shoot
+    SHOOTING        // Actively shooting, transfer running forward
 }

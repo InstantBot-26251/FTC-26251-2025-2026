@@ -17,8 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     // tuning values
-    public static double linearScalar = (1.026483699897225 + 1.0126931711026617 + 1.0183723069079784) / 3;
-    public static double angularScalar = (1.0369284199286806 + 1.0316728273289406) / 2;
+    public static double linearScalar =  (1.0552050224572318 + 1.0552050224572318) / 2;
+    public static double angularScalar = (1.0870443195300399 + 1.066260077695128) / 2;
 
     // offset values
     public static double x_offset;
@@ -27,9 +27,9 @@ public class Constants {
 
     // Follower Constants
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(5)
-            .forwardZeroPowerAcceleration((-48.797532039760966 + -48.08819084142787 + -49.617025777709834) / 3)
-            .lateralZeroPowerAcceleration((-69.1192435003088 + -72.3474983053327 + -64.24053799899083) / 3)
+            .mass(9.888314)
+            .forwardZeroPowerAcceleration((-51.6758158363617 + -53.427311796983965 + -48.728190211534475) / 3)
+            .lateralZeroPowerAcceleration((-99.76900543611134 + -86.39340308348679 + -90.30358998760529) / 3)
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.3, 0.0, 0.01, 0.6, 0.01))
             .translationalPIDFCoefficients(new PIDFCoefficients(0.28, 0.0,0.021,0.015))
             .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0.029,0.0, 0.001, 0.0))
@@ -54,8 +54,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity((69.35059554933562 + 63.18280077356053 + 65.66505732498769) / 3)
-            .yVelocity((52.194670429379926 + 52.0847350593627 + 51.52544637364665) / 3);
+            .xVelocity((47.347301573265256 + 56.77290788785679 + 56.51579128475639) / 3)
+            .yVelocity((44.45654200756643 + 44.09850113035188) / 2);
 
     // OTOS Constants
     public static OTOSConstants localizerConstants = new OTOSConstants()

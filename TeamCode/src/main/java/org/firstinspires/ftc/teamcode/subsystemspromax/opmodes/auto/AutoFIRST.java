@@ -6,12 +6,13 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@TeleOp(name = "Auto FIRST", group = "Auto")
+@Autonomous(name = "Auto FIRST", group = "Auto")
 public class AutoFIRST extends OpMode {
     private Follower follower;
 
@@ -30,14 +31,14 @@ public class AutoFIRST extends OpMode {
 
     private PathState pathState;
 
-    private final Pose startPose = new Pose(20.5, 122.5, Math.toRadians(90.0));
-    private final Pose scorePose = new Pose(48, 96, Math.toRadians(135));
-    private final Pose intake1Pose = new Pose(20, 84, Math.toRadians(180));
-    private final Pose intake1CP = new Pose(60.31813361611877, 81.23860021208908);
-    private final Pose intake2Pose = new Pose(20, 60, Math.toRadians(180));
+    private final Pose startPose = new Pose(120, 122.5, Math.toRadians(90));
+    private final Pose scorePose = new Pose(96, 96, Math.toRadians(55));
+    private final Pose intake1Pose = new Pose(126.50467289719626, 83.66355140186916, Math.toRadians(0));
+    private final Pose intake1CP = new Pose(81.64485981308411, 80.97196261682242);
+    private final Pose intake2Pose = new Pose(127.4018691588785, 59.663551401869164, Math.toRadians(0));
     private final Pose intake2CP = new Pose(75.74125132555673, 55.43160127253447);
     private final Pose intake3Pose = new Pose(20, 36, Math.toRadians(180));
-    private final Pose intake3CP = new Pose(92.997, 30.235);
+    private final Pose intake3CP = new Pose(58.76635514018692, 28.03738317757009);
 
     private PathChain scorePreload;
     private PathChain intake1;
@@ -71,7 +72,7 @@ public class AutoFIRST extends OpMode {
                 .setLinearHeadingInterpolation(intake1Pose.getHeading(), scorePose.getHeading())
                 .build();
 
-        intake1 = follower.pathBuilder()
+        intake2 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         scorePose,
                         intake2CP,
@@ -143,7 +144,7 @@ public class AutoFIRST extends OpMode {
 
             case INTAKE_SECOND:
                 if (!follower.isBusy()) {
-                    follower.followPath(score1, true);
+                    follower.followPath(score2, true);
                     setPathState(PathState.SCORE_SECOND_INTAKE_SET);
                     telemetry.addLine("Intaked second set or done with path 4");
                 }
@@ -187,9 +188,10 @@ public class AutoFIRST extends OpMode {
 
     @Override
     public void init() {
-        setPathState(PathState.DRIVE_TO_SHOOT_P);
         pathTimer = new Timer();
         opModeTimer = new Timer();
+
+        setPathState(PathState.DRIVE_TO_SHOOT_P);
 
         follower = Constants.createFollower(hardwareMap);
         // TODO: Add in other subsystems

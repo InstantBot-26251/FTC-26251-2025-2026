@@ -3,21 +3,19 @@ package org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.i
 import static org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.IntakeConstants.*;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import com.seattlesolvers.solverslib.command.CommandBase;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 @Config
-public class Intake {
+public class Intake extends SubsystemBase {
     private final DcMotorEx intake;
-    private RevColorSensorV3 proximitySensor;
+    private final DcMotorEx transfer;
 
     public boolean intakeJammed = false;
-    private int detectionCount = 0;
 
     private static IntakeState intakeState;
 
@@ -27,14 +25,13 @@ public class Intake {
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        proximitySensor = hardwareMap.get(RevColorSensorV3.class, "intakeSensor");
-
+        transfer = hardwareMap.get(DcMotorEx.class, "transfer");
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         setIDLE();
 
         stateTimer = new ElapsedTime();
         stateTimer.reset();
 
-        intakeState = IntakeState.IDLE;
     }
 
     public void periodic() {
@@ -59,16 +56,15 @@ public class Intake {
         switch (intakeState) {
             case IDLE:
                 intake.setPower(IDLE);
+                transfer.setPower(IDLE);
                 break;
             case INTAKING:
                 intake.setPower(INTAKE);
-                detectionCount = 0; // Reset count when starting intake
-                break;
-            case TRANSFERRING:
-                intake.setPower(TRANSFER);
+                transfer.setPower(INTAKE);
                 break;
             case REVERSE:
                 intake.setPower(REVERSE);
+                transfer.setPower(REVERSE);
                 break;
         }
     }
@@ -76,10 +72,6 @@ public class Intake {
     public void updateIntake() {
         switch (intakeState) {
             case INTAKING:
-                if (transferFull()) {
-                    setIntake(IntakeState.IDLE);
-                }
-
                 if ((intake.isOverCurrent())) {
                     intakeJammed = true;
                     stateTimer.reset();
@@ -94,7 +86,7 @@ public class Intake {
                 }
                 break;
             case IDLE:
-                // Dont have to set power 0 again
+                // Don't have to set power 0 again
                 break;
         }
     }
@@ -102,7 +94,20 @@ public class Intake {
     public void toggleIntake() {
         if (intakeState.equals(IntakeState.IDLE)) {
             setIntake(IntakeState.INTAKING);
+        } else {
+            setIntake(IntakeState.IDLE);
         }
+    }
+
+    // Allow external control of just the transfer motor
+    // This is useful when ILC needs to take over transfer control
+    public void setTransferPower(double power) {
+        transfer.setPower(power);
+    }
+
+    // Stop intake but allow transfer to continue (for shooting)
+    public void stopIntakeOnly() {
+        intake.setPower(IDLE);
     }
 
     // STATE MACHINE
@@ -110,21 +115,5 @@ public class Intake {
         intakeState = state;
     }
 
-    public boolean transferFull() {
-        // Check if sensor detects an object within proximity threshold
-        double distance = proximitySensor.getDistance(DistanceUnit.CM);
-
-        if (distance < PROXIMITY_THRESHOLD_CM) {
-            detectionCount++;
-        }
-
-        // Return true if we've detected 3 or more times
-        return detectionCount >= FULL_THRESHOLD;
-    }
-
-    // Call this method to reset the detection counter (e.g., after transferring)
-    public void resetDetectionCount() {
-        detectionCount = 0;
-    }
 
 }

@@ -20,13 +20,16 @@ public class ILCConstants {
     };
 
     // GATE CONSTANTS
-    public static double STOP_POSITION = 1;
-    public static double SHOOT_POSITION = 0;
-    public static double GATE_OPEN_TIME = 1;
-    public static double GATE_CLOSE_TIME = 0.3;
+//    public static double STOP_POSITION = 1;
+//    public static double SHOOT_POSITION = 0;
+//    public static double GATE_OPEN_TIME = 1;
+//    public static double GATE_CLOSE_TIME = 0.3;
 
     // ILC CONSTANTS
     public static double flywheelVelocity = 0;
     public static double MIN_FLYWHEEL_RPM = 800;
     public static double FLYWHEEL_MAX_SPINUP_TIME = 2;
+    public static double TRANSFER_REVERSE_TIME = 0.1; // TUNE
+    public static double TRANSFER_REVERSE_POWER = -0.5; // TUNE
+    public static double TRANSFER_SHOOT_POWER = 1.0; // Full speed forward
 }

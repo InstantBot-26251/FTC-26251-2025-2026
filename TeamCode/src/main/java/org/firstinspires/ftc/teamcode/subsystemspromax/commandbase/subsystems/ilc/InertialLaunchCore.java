@@ -1,21 +1,19 @@
 package org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc;
 
-import static org.firstinspires.ftc.teamcode.solverslib.commandbase.subsystems.vision.VisionConstants.arducam_cx;
-import static org.firstinspires.ftc.teamcode.solverslib.commandbase.subsystems.vision.VisionConstants.arducam_cy;
-import static org.firstinspires.ftc.teamcode.solverslib.commandbase.subsystems.vision.VisionConstants.arducam_fx;
-import static org.firstinspires.ftc.teamcode.solverslib.commandbase.subsystems.vision.VisionConstants.arducam_fy;
 import static org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc.ILCConstants.*;
+import static org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.vision.VisionConstants.*;
 
 import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.solverslib.globals.RobotMap;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -28,17 +26,17 @@ public class InertialLaunchCore {
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
-    // Gate servo
-    private Servo gate;
+    private WebcamName arducam;
+
     // ilcAlpha is left, ilcBeta is right
     private DcMotorEx ilcAlpha, ilcBeta;
+    private DcMotorEx transfer; // Transfer motor reference
 
     public int shotsRemaining = 0;
 
     // State variables
     private double target = 0;
     private boolean isILCActivated = true;
-
 
     // Class variables
     private ILCState ilcState = ILCState.IDLE;
@@ -52,14 +50,16 @@ public class InertialLaunchCore {
 
         ilcAlpha = hardwareMap.get(DcMotorEx.class, "ilcL"); // ILC dual motors
         ilcBeta = hardwareMap.get(DcMotorEx.class, "ilcR");
-        gate = hardwareMap.get(Servo.class, "gate"); // Gate servo
+        arducam = hardwareMap.get(WebcamName.class, "arducam");
+        transfer = hardwareMap.get(DcMotorEx.class, "transfer"); // Get transfer motor
 
         ilcAlpha.setDirection(DcMotorSimple.Direction.REVERSE);
+        transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         ilcState = ILCState.IDLE;
 
         setPower(0);
-        gateStop();
+        setTransferPower(0);
     }
 
     // PERIODIC UPDATE
@@ -75,6 +75,16 @@ public class InertialLaunchCore {
         switch (ilcState) {
             case IDLE:
                 // waiting for startSpinup() command
+                break;
+
+            case REVERSING:
+                // Check if reverse time is complete
+                if (stateTimer.seconds() >= TRANSFER_REVERSE_TIME) {
+                    // Stop transfer and move to spinning up
+                    setTransferPower(0);
+                    stateTimer.reset();
+                    ilcState = ILCState.SPINNING_UP;
+                }
                 break;
 
             case SPINNING_UP:
@@ -118,14 +128,14 @@ public class InertialLaunchCore {
         return Math.abs((getTarget() - getVelocity())) < 50;
     }
 
-    public boolean isAtShootPosition() {
-        return gate.getPosition() == SHOOT_POSITION;
-    }
-
     // SETTERS
     public void setPower(double power) {
         ilcAlpha.setPower(power);
         ilcBeta.setPower(power);
+    }
+
+    public void setTransferPower(double power) {
+        transfer.setPower(power);
     }
 
     public void setTarget(double velocity) {
@@ -139,9 +149,11 @@ public class InertialLaunchCore {
             double distance = getDistance();
             targetVelocity = interpolateRPM(distance);
             setTarget(targetVelocity);
-            activateILC();
+
+            // Start reverse sequence
+            setTransferPower(TRANSFER_REVERSE_POWER);
             stateTimer.reset();
-            ilcState = ILCState.SPINNING_UP;
+            ilcState = ILCState.REVERSING;
         }
     }
 
@@ -149,9 +161,11 @@ public class InertialLaunchCore {
         if (ilcState == ILCState.IDLE) {
             targetVelocity = interpolateRPM(distance);
             setTarget(targetVelocity);
-            activateILC();
+
+            // Start reverse sequence
+            setTransferPower(TRANSFER_REVERSE_POWER);
             stateTimer.reset();
-            ilcState = ILCState.SPINNING_UP;
+            ilcState = ILCState.REVERSING;
         }
     }
 
@@ -168,7 +182,8 @@ public class InertialLaunchCore {
 
     public void shoot() {
         if (ilcState == ILCState.READY) {
-            gateLaunch();
+            // Start transfer forward at full speed
+            setTransferPower(TRANSFER_SHOOT_POWER);
             stateTimer.reset();
             ilcState = ILCState.SHOOTING;
         }
@@ -176,7 +191,7 @@ public class InertialLaunchCore {
 
     public void stopShooting() {
         if (ilcState == ILCState.SHOOTING) {
-            gateStop();
+            setTransferPower(0);
             deactivateILC();
             ilcState = ILCState.IDLE;
         }
@@ -184,7 +199,7 @@ public class InertialLaunchCore {
 
     public void forceIdle() {
         deactivateILC();
-        gateStop();
+        setTransferPower(0);
         ilcState = ILCState.IDLE;
     }
 
@@ -205,28 +220,16 @@ public class InertialLaunchCore {
         return ilcState == ILCState.SPINNING_UP;
     }
 
+    public boolean isReversing() {
+        return ilcState == ILCState.REVERSING;
+    }
+
     public ILCState getState() {
         return ilcState;
     }
-
     // CONTROL METHODS
     public void updateVelocityPID() {
         setPower((kV * getTarget()) + (kP * (getTarget() - getVelocity())) + kS);
-    }
-
-    public void gateLaunch() {
-        gate.setPosition(SHOOT_POSITION);
-    }
-
-    public void gateStop() {
-        gate.setPosition(STOP_POSITION);
-    }
-
-    public void flipGate() {
-        if (gate.getPosition() == STOP_POSITION)
-            gateLaunch();
-        else
-            gateStop();
     }
 
     public void activateILC() {
@@ -250,42 +253,42 @@ public class InertialLaunchCore {
 
     /**
      * LinEaR InTeRPolATiOn
-     * If distance isn't a valid one, it will clamp to the nearest point
+     * If distance isn't a valid one, it will clamp to the nearest endpoint
      *
      * @param distance Target distance - measure in inches
      * @return Interpolated RPM value
      */
-    private double interpolateRPM(double distance) {
-        // Handle edge cases
-        if (distanceRPMLUT.length == 0) {
-            return 0;
-        }
+    private double interpolateRPM (double distance) {
+            // Handle edge cases
+            if (distanceRPMLUT.length == 0) {
+                return 0;
+            }
 
-        if (distance <= distanceRPMLUT[0][0]) {
+            if (distance <= distanceRPMLUT[0][0]) {
+                return distanceRPMLUT[0][1];
+            }
+
+            if (distance >= distanceRPMLUT[distanceRPMLUT.length - 1][0]) {
+                return distanceRPMLUT[distanceRPMLUT.length - 1][1];
+            }
+
+            // Find the two points to interpolate between
+            for (int i = 0; i < distanceRPMLUT.length - 1; i++) {
+                double d1 = distanceRPMLUT[i][0];
+                double rpm1 = distanceRPMLUT[i][1];
+                double d2 = distanceRPMLUT[i + 1][0];
+                double rpm2 = distanceRPMLUT[i + 1][1];
+
+                if (distance >= d1 && distance <= d2) {
+                    // Linear interpolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
+                    double t = (distance - d1) / (d2 - d1);
+                    return rpm1 + t * (rpm2 - rpm1);
+                }
+            }
+
+            // Fallback (should never reach here)
             return distanceRPMLUT[0][1];
         }
-
-        if (distance >= distanceRPMLUT[distanceRPMLUT.length - 1][0]) {
-            return distanceRPMLUT[distanceRPMLUT.length - 1][1];
-        }
-
-        // Find the two points to interpolate between
-        for (int i = 0; i < distanceRPMLUT.length - 1; i++) {
-            double d1 = distanceRPMLUT[i][0];
-            double rpm1 = distanceRPMLUT[i][1];
-            double d2 = distanceRPMLUT[i + 1][0];
-            double rpm2 = distanceRPMLUT[i + 1][1];
-
-            if (distance >= d1 && distance <= d2) {
-                // Linear interpolation formula: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
-                double t = (distance - d1) / (d2 - d1);
-                return rpm1 + t * (rpm2 - rpm1);
-            }
-        }
-
-        // Fallback (should never reach here)
-        return distanceRPMLUT[0][1];
-    }
 
     // VISION
     public void makeProcessor() {
@@ -296,7 +299,7 @@ public class InertialLaunchCore {
 
     public void makePortal() {
         VisionPortal.Builder portalBuilder = new VisionPortal.Builder()
-                .setCamera(RobotMap.getInstance().ARDUCAM)
+                .setCamera(arducam)
                 .setCameraResolution(new Size(640, 480))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .setAutoStopLiveView(true)
