@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -20,7 +21,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.ArrayList;
 
 @Config
-public class InertialLaunchCore {
+public class InertialLaunchCore extends SubsystemBase {
 //    // Vision
 //    private AprilTagProcessor aprilTag;
 //    private VisionPortal visionPortal;
@@ -146,17 +147,15 @@ public class InertialLaunchCore {
     // AUTO
     // COMMANDS FOR AUTO
     public void startSpinup() {
-        if (ilcState == ILCState.IDLE) {
 //            double distance = getDistance();
 //            targetVelocity = interpolateRPM(distance);
-            targetVelocity = CLOSEVELOCITY;
-            setTarget(targetVelocity);
+        targetVelocity = CLOSEVELOCITY;
+        setTarget(targetVelocity);
 
-            // Start reverse sequence
-            setTransferPower(TRANSFER_REVERSE_POWER);
-            stateTimer.reset();
-            ilcState = ILCState.REVERSING;
-        }
+        // Start reverse sequence
+        setTransferPower(TRANSFER_REVERSE_POWER);
+        stateTimer.reset();
+        ilcState = ILCState.REVERSING;
     }
 
 //    public void startSpinupWithDistance(double distance) {

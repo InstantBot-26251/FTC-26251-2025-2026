@@ -52,11 +52,11 @@ public class TeleOpMode extends OpMode {
 
     @Override
     public void init() {
-//        robot = new RobotE(hardwareMap, Alliance.BLUE);
+        robot = new RobotE(hardwareMap, Alliance.BLUE);
 //
-//        robot.onTeleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
-//        robot.bindControls();
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        robot.onTeleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
+        robot.bindControls();
+//        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Initialize subsystems
         follower = Constants.createFollower(hardwareMap);
@@ -96,19 +96,19 @@ public class TeleOpMode extends OpMode {
 //    }
     }
 
-//    @Override
-//    public void init_loop() {
-//        if (gamepad1.aWasPressed()) {
-//            robot.alliance = Alliance.BLUE;
-//        }
-//
-//        if (gamepad1.bWasPressed()) {
-//            robot.alliance = Alliance.RED;
-//        }
-//
-//        robot.telemetry.addData("Alliance", robot.alliance);
-//        robot.telemetry.update();
-//    }
+    @Override
+    public void init_loop() {
+        if (gamepad1.aWasPressed()) {
+            robot.alliance = Alliance.BLUE;
+        }
+
+        if (gamepad1.bWasPressed()) {
+            robot.alliance = Alliance.RED;
+        }
+
+        robot.telemetry.addData("Alliance", robot.alliance);
+        robot.telemetry.update();
+    }
 
     @Override
     public void loop() {

@@ -25,10 +25,11 @@ public class Intake extends SubsystemBase {
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+        transfer.setDirection(DcMotorSimple.Direction.FORWARD);
         setIDLE();
 
         stateTimer = new ElapsedTime();
