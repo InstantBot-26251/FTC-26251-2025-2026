@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -22,17 +21,19 @@ import java.util.ArrayList;
 
 @Config
 public class InertialLaunchCore {
-    // Vision
-    private AprilTagProcessor aprilTag;
-    private VisionPortal visionPortal;
-
-    private WebcamName arducam;
+//    // Vision
+//    private AprilTagProcessor aprilTag;
+//    private VisionPortal visionPortal;
+//
+//    private WebcamName arducam;
 
     // ilcAlpha is left, ilcBeta is right
     private DcMotorEx ilcAlpha, ilcBeta;
     private DcMotorEx transfer; // Transfer motor reference
 
     public int shotsRemaining = 0;
+
+    public double CLOSEVELOCITY = 1000;
 
     // State variables
     private double target = 0;
@@ -45,13 +46,13 @@ public class InertialLaunchCore {
 
 
     public InertialLaunchCore(HardwareMap hardwareMap) {
-        makeProcessor();
-        makePortal();
-
         ilcAlpha = hardwareMap.get(DcMotorEx.class, "ilcL"); // ILC dual motors
         ilcBeta = hardwareMap.get(DcMotorEx.class, "ilcR");
-        arducam = hardwareMap.get(WebcamName.class, "arducam");
+//        arducam = hardwareMap.get(WebcamName.class, "arducam");
         transfer = hardwareMap.get(DcMotorEx.class, "transfer"); // Get transfer motor
+
+//        makePortal();
+//        makeProcessor();
 
         ilcAlpha.setDirection(DcMotorSimple.Direction.REVERSE);
         transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -146,8 +147,9 @@ public class InertialLaunchCore {
     // COMMANDS FOR AUTO
     public void startSpinup() {
         if (ilcState == ILCState.IDLE) {
-            double distance = getDistance();
-            targetVelocity = interpolateRPM(distance);
+//            double distance = getDistance();
+//            targetVelocity = interpolateRPM(distance);
+            targetVelocity = CLOSEVELOCITY;
             setTarget(targetVelocity);
 
             // Start reverse sequence
@@ -157,28 +159,28 @@ public class InertialLaunchCore {
         }
     }
 
-    public void startSpinupWithDistance(double distance) {
-        if (ilcState == ILCState.IDLE) {
-            targetVelocity = interpolateRPM(distance);
-            setTarget(targetVelocity);
+//    public void startSpinupWithDistance(double distance) {
+//        if (ilcState == ILCState.IDLE) {
+//            targetVelocity = interpolateRPM(distance);
+//            setTarget(targetVelocity);
+//
+//            // Start reverse sequence
+//            setTransferPower(TRANSFER_REVERSE_POWER);
+//            stateTimer.reset();
+//            ilcState = ILCState.REVERSING;
+//        }
+//    }
 
-            // Start reverse sequence
-            setTransferPower(TRANSFER_REVERSE_POWER);
-            stateTimer.reset();
-            ilcState = ILCState.REVERSING;
-        }
-    }
-
-    // Update velocity during spinup if robot is moving
-    public void updateVelocityDuringSpinup() {
-        if (ilcState == ILCState.SPINNING_UP) {
-            double distance = getDistance();
-            if (distance > 0) {
-                targetVelocity = interpolateRPM(distance);
-                setTarget(targetVelocity);
-            }
-        }
-    }
+//    // Update velocity during spinup if robot is moving
+//    public void updateVelocityDuringSpinup() {
+//        if (ilcState == ILCState.SPINNING_UP) {
+//            double distance = getDistance();
+//            if (distance > 0) {
+//                targetVelocity = interpolateRPM(distance);
+//                setTarget(targetVelocity);
+//            }
+//        }
+//    }
 
     public void shoot() {
         if (ilcState == ILCState.READY) {
@@ -246,10 +248,10 @@ public class InertialLaunchCore {
         setTarget(requiredRPM);
     }
 
-    public void setVelocityByDistance() {
-        double requiredRPM = interpolateRPM(getDistance());
-        setTarget(requiredRPM);
-    }
+//    public void setVelocityByDistance() {
+//        double requiredRPM = interpolateRPM(getDistance());
+//        setTarget(requiredRPM);
+//    }
 
     /**
      * LinEaR InTeRPolATiOn
@@ -291,73 +293,73 @@ public class InertialLaunchCore {
         }
 
     // VISION
-    public void makeProcessor() {
-        aprilTag = new AprilTagProcessor.Builder()
-                .setLensIntrinsics(arducam_fx, arducam_fy, arducam_cx, arducam_cy)
-                .build();
-    }
-
-    public void makePortal() {
-        VisionPortal.Builder portalBuilder = new VisionPortal.Builder()
-                .setCamera(arducam)
-                .setCameraResolution(new Size(640, 480))
-                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-                .setAutoStopLiveView(true)
-                .addProcessor(aprilTag);
-
-        visionPortal = portalBuilder.build();
-    }
-    public ArrayList<AprilTagDetection> getDetections() {
-        return aprilTag.getDetections();
-    }
-
-    public int getID() {
-        ArrayList<AprilTagDetection> detections = getDetections();
-
-        if (!detections.isEmpty()) {
-            return detections.get(0).id; // get the ID of the first detected tag
-        } else {
-            return -1; // return -1 (or some other value) if no tags are detected
-        }
-    }
-
-    public double getDistance() {
-        ArrayList<AprilTagDetection> detections = getDetections();
-
-        if (detections != null && !detections.isEmpty()) {
-            AprilTagDetection detection = detections.get(0);
-            if (detection.ftcPose != null) {
-                return detection.ftcPose.range;
-            }
-        }
-
-        return -1.0;
-    }
-
-    public String getMotif() {
-        ArrayList<AprilTagDetection> detections = getDetections();
-
-        if (detections != null && !detections.isEmpty()) {
-            AprilTagDetection best = detections.get(0);
-
-            if (best != null && best.metadata != null && best.metadata.name != null) {
-                return best.metadata.name;   // e.g. "PGP"
-            }
-        }
-
-        return "UNKNOWN";
-    }
-
-    public void stopStreaming() {
-        visionPortal.stopStreaming();
-    }
-
-    public void resumeStreaming() {
-        visionPortal.resumeStreaming();
-    }
-
-    public void closePortal() {
-        visionPortal.close();
-    }
+//    public void makeProcessor() {
+//        aprilTag = new AprilTagProcessor.Builder()
+//                .setLensIntrinsics(arducam_fx, arducam_fy, arducam_cx, arducam_cy)
+//                .build();
+//    }
+//
+//    public void makePortal() {
+//        VisionPortal.Builder portalBuilder = new VisionPortal.Builder()
+//                .setCamera(arducam)
+//                .setCameraResolution(new Size(640, 480))
+//                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+//                .setAutoStopLiveView(true)
+//                .addProcessor(aprilTag);
+//
+//        visionPortal = portalBuilder.build();
+//    }
+//    public ArrayList<AprilTagDetection> getDetections() {
+//        return aprilTag.getDetections();
+//    }
+//
+//    public int getID() {
+//        ArrayList<AprilTagDetection> detections = getDetections();
+//
+//        if (!detections.isEmpty()) {
+//            return detections.get(0).id; // get the ID of the first detected tag
+//        } else {
+//            return -1; // return -1 (or some other value) if no tags are detected
+//        }
+//    }
+//
+//    public double getDistance() {
+//        ArrayList<AprilTagDetection> detections = getDetections();
+//
+//        if (detections != null && !detections.isEmpty()) {
+//            AprilTagDetection detection = detections.get(0);
+//            if (detection.ftcPose != null) {
+//                return detection.ftcPose.range;
+//            }
+//        }
+//
+//        return -1.0;
+//    }
+//
+//    public String getMotif() {
+//        ArrayList<AprilTagDetection> detections = getDetections();
+//
+//        if (detections != null && !detections.isEmpty()) {
+//            AprilTagDetection best = detections.get(0);
+//
+//            if (best != null && best.metadata != null && best.metadata.name != null) {
+//                return best.metadata.name;   // e.g. "PGP"
+//            }
+//        }
+//
+//        return "UNKNOWN";
+//    }
+//
+//    public void stopStreaming() {
+//        visionPortal.stopStreaming();
+//    }
+//
+//    public void resumeStreaming() {
+//        visionPortal.resumeStreaming();
+//    }
+//
+//    public void closePortal() {
+//        visionPortal.close();
+//    }
 
 }

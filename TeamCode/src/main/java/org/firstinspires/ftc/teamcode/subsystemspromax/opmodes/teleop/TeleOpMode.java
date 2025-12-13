@@ -1,16 +1,21 @@
 package org.firstinspires.ftc.teamcode.subsystemspromax.opmodes.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystemspromax.RobotE;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 
+@TeleOp(name = "TeleOp")
 public class TeleOpMode extends OpMode {
     RobotE robot;
 
     @Override
     public void init() {
         robot = new RobotE(hardwareMap, Alliance.BLUE);
+
+        robot.onTeleopInit(telemetry, hardwareMap, gamepad1, gamepad2);
+        robot.bindControls();
     }
 
     @Override
@@ -29,10 +34,8 @@ public class TeleOpMode extends OpMode {
 
     @Override
     public void loop() {
-        robot.periodic();
-
-        robot.bindControls();
         robot.handleTeleopControls();
+        robot.periodic();
 
         robot.telemetry.addData("Follower Pose", robot.follower.getPose().toString());
         robot.telemetry.addData("ILC Velocity", robot.ilc.getVelocity());

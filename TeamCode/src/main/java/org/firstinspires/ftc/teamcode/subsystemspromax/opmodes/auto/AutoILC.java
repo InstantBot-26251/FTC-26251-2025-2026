@@ -25,7 +25,7 @@ import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.commands.Shoo
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.ilc.InertialLaunchCore;
 import org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsystems.intake.Intake;
 
-@Autonomous(name = "Auto with ILC", group = "Auto")
+@Autonomous(name = "Auto with ILC", group = "Auto", preselectTeleOp = "TeleOp")
 public class AutoILC extends OpMode {
     private Follower follower;
     private InertialLaunchCore ilc;
@@ -140,8 +140,8 @@ public class AutoILC extends OpMode {
 
     @Override
     public void init_loop() {
-        telemetry.addData("ILC Distance", ilc.getDistance());
-        telemetry.addData("ILC ID", ilc.getID());
+//        telemetry.addData("ILC Distance", ilc.getDistance());
+//        telemetry.addData("ILC ID", ilc.getID());
         telemetry.addData("Position", follower.getPose());
         telemetry.update();
     }
@@ -195,7 +195,7 @@ public class AutoILC extends OpMode {
         telemetry.addData("ILC Ready", ilc.isReady());
         telemetry.addData("ILC Target RPM", "%.0f", ilc.getTarget());
         telemetry.addData("ILC Actual RPM", "%.0f", ilc.getVelocity());
-        telemetry.addData("Distance to Target", "%.1f in", ilc.getDistance());
+//        telemetry.addData("Distance to Target", "%.1f in", ilc.getDistance());
         telemetry.addLine();
 
         telemetry.addData("Intake State", intake.getIntakeState());

@@ -131,10 +131,7 @@ public class RobotE {
         this.driveController = new GamepadEx(gamepad1);
         this.manipController = new GamepadEx(gamepad2);
 
-        // Set starting pose (use end pose from auto if available)
-        if (endPose != null) {
-            follower.setStartingPose(endPose);
-        }
+        follower.setStartingPose(new Pose(0, 0, Math.toRadians(180)));
 
         // Enable heading lock for teleop
         headingLockEnabled = false; // Start disabled, user can toggle
@@ -143,8 +140,8 @@ public class RobotE {
         // Reset subsystems
         intake.setIDLE();
         ilc.forceIdle();
-
-        bindControls();
+//
+//        bindControls();
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
@@ -345,11 +342,11 @@ public class RobotE {
     }
 
     public double getTargetDistance() {
-        // Try vision first
-        double visionDistance = ilc.getDistance();
-        if (visionDistance > 0) {
-            return visionDistance;
-        }
+//        // Try vision first
+//        double visionDistance = ilc.getDistance();
+//        if (visionDistance > 0) {
+//            return visionDistance;
+//        }
 
         // Fallback to odometry
         Pose pose = follower.getPose();
