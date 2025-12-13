@@ -9,6 +9,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
@@ -131,7 +132,9 @@ public class RobotE {
         this.driveController = new GamepadEx(gamepad1);
         this.manipController = new GamepadEx(gamepad2);
 
-        follower.setStartingPose(new Pose(0, 0, Math.toRadians(180)));
+
+        follower.setPose(new Pose(0, 0, Math.toRadians(180)));
+        follower.startTeleopDrive();
 
         // Enable heading lock for teleop
         headingLockEnabled = false; // Start disabled, user can toggle
@@ -236,9 +239,9 @@ public class RobotE {
         driveController.readButtons();
         manipController.readButtons();
 
-        double drive = -applyResponseCurve(driveController.getLeftY(), DRIVE_SENSITIVITY);
-        double strafe = -applyResponseCurve(driveController.getLeftX(), DRIVE_SENSITIVITY);
-        double turn = -applyResponseCurve(driveController.getRightX(), ROTATIONAL_SENSITIVITY) * ROTATION_DAMPEN;
+        double drive = applyResponseCurve(driveController.getLeftY(), DRIVE_SENSITIVITY);
+        double strafe = applyResponseCurve(driveController.getLeftX(), DRIVE_SENSITIVITY);
+        double turn = applyResponseCurve(driveController.getRightX(), ROTATIONAL_SENSITIVITY) * ROTATION_DAMPEN;
 
         // Apply slow mode if enabled
         if (slowModeEnabled) {
@@ -272,6 +275,8 @@ public class RobotE {
         double error = targetHeading - follower.getHeading();
         headingLockPID.setCoefficients(follower.constants.coefficientsHeadingPIDF);
         headingLockPID.updateError(error);
+
+        CommandScheduler.getInstance().run();
     }
 
     public void stop() {

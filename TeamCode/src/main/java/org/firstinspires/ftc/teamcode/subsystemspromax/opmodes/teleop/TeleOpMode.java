@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystemspromax.opmodes.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.seattlesolvers.solverslib.command.CommandOpMode;
 
 import org.firstinspires.ftc.teamcode.subsystemspromax.RobotE;
 import org.firstinspires.ftc.teamcode.util.Alliance;
@@ -34,8 +35,8 @@ public class TeleOpMode extends OpMode {
 
     @Override
     public void loop() {
-        robot.handleTeleopControls();
         robot.periodic();
+        robot.handleTeleopControls();
 
         robot.telemetry.addData("Follower Pose", robot.follower.getPose().toString());
         robot.telemetry.addData("ILC Velocity", robot.ilc.getVelocity());
@@ -43,4 +44,5 @@ public class TeleOpMode extends OpMode {
         robot.telemetry.addData("Hold Position", robot.headingLockEnabled);
         robot.telemetry.update();
     }
+
 }

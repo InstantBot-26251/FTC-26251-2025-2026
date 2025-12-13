@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.subsystemspromax.commandbase.subsys
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
@@ -26,7 +27,8 @@ public class Intake extends SubsystemBase {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        transfer.setDirection(DcMotorSimple.Direction.REVERSE);
         setIDLE();
 
         stateTimer = new ElapsedTime();
@@ -48,7 +50,7 @@ public class Intake extends SubsystemBase {
     // SETTERS
     public void setIDLE() {
         intake.setPower(IDLE);
-        setIntakeState(IntakeState.IDLE);
+        setIntake(IntakeState.IDLE);
     }
 
     public void setIntake(IntakeState intakeState) {
@@ -108,11 +110,6 @@ public class Intake extends SubsystemBase {
     // Stop intake but allow transfer to continue (for shooting)
     public void stopIntakeOnly() {
         intake.setPower(IDLE);
-    }
-
-    // STATE MACHINE
-    public void setIntakeState(IntakeState state) {
-        intakeState = state;
     }
 
 
