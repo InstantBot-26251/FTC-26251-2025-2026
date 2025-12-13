@@ -44,7 +44,6 @@ public class RobotE {
 
     // State
     public static Pose endPose;
-    private final Timer loopTimer = new Timer();
 
     // Heading lock
     private double targetHeading = Math.toRadians(180);
@@ -100,8 +99,6 @@ public class RobotE {
         headingLockPID = new PIDFController(follower.constants.coefficientsHeadingPIDF);
         // Initialize aim PID
         headingController = new PIDFController(follower.constants.coefficientsHeadingPIDF);
-
-        loopTimer.resetTimer();
     }
 
     // Autonomous init
@@ -144,11 +141,6 @@ public class RobotE {
         intake.setIDLE();
         intake.resumeTransferControl();  // Make sure intake has control initially
         ilc.forceIdle();
-
-        // *** CRITICAL: Register subsystems with CommandScheduler ***
-        CommandScheduler.getInstance().reset();
-        CommandScheduler.getInstance().registerSubsystem(intake);
-        CommandScheduler.getInstance().registerSubsystem(ilc);
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
