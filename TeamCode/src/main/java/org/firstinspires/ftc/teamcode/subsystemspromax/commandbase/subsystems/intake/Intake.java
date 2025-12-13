@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 
 @Config
@@ -17,6 +16,9 @@ public class Intake extends SubsystemBase {
     private final DcMotorEx transfer;
 
     public boolean intakeJammed = false;
+
+    // NEW: Flag to indicate if ILC has control of transfer
+    private boolean transferControlledByILC = false;
 
     private static IntakeState intakeState;
 
@@ -29,11 +31,11 @@ public class Intake extends SubsystemBase {
         transfer = hardwareMap.get(DcMotorEx.class, "transfer");
         transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+
         setIDLE();
 
         stateTimer = new ElapsedTime();
         stateTimer.reset();
-
     }
 
     public void periodic() {
@@ -41,15 +43,26 @@ public class Intake extends SubsystemBase {
     }
 
     // GETTERS
-    // STATE MACHINE
     public IntakeState getIntakeState() {
         return intakeState;
     }
 
+    // NEW: Allow ILC to take control
+    public void releaseTransferControl() {
+        transferControlledByILC = true;
+    }
+
+    // NEW: Intake regains control
+    public void resumeTransferControl() {
+        transferControlledByILC = false;
+    }
 
     // SETTERS
     public void setIDLE() {
         intake.setPower(IDLE);
+        if (!transferControlledByILC) {
+            transfer.setPower(IDLE);
+        }
         setIntake(IntakeState.IDLE);
     }
 
@@ -58,15 +71,21 @@ public class Intake extends SubsystemBase {
         switch (intakeState) {
             case IDLE:
                 intake.setPower(IDLE);
-                transfer.setPower(IDLE);
+                if (!transferControlledByILC) {
+                    transfer.setPower(IDLE);
+                }
                 break;
             case INTAKING:
                 intake.setPower(INTAKE);
-                transfer.setPower(INTAKE);
+                if (!transferControlledByILC) {
+                    transfer.setPower(INTAKE);
+                }
                 break;
             case REVERSE:
                 intake.setPower(REVERSE);
-                transfer.setPower(REVERSE);
+                if (!transferControlledByILC) {
+                    transfer.setPower(REVERSE);
+                }
                 break;
         }
     }
@@ -74,7 +93,7 @@ public class Intake extends SubsystemBase {
     public void updateIntake() {
         switch (intakeState) {
             case INTAKING:
-                if ((intake.isOverCurrent())) {
+                if (intake.isOverCurrent()) {
                     intakeJammed = true;
                     stateTimer.reset();
                     setIntake(IntakeState.REVERSE);
@@ -88,7 +107,6 @@ public class Intake extends SubsystemBase {
                 }
                 break;
             case IDLE:
-                // Don't have to set power 0 again
                 break;
         }
     }
@@ -102,15 +120,14 @@ public class Intake extends SubsystemBase {
     }
 
     // Allow external control of just the transfer motor
-    // This is useful when ILC needs to take over transfer control
     public void setTransferPower(double power) {
-        transfer.setPower(power);
+        if (!transferControlledByILC) {
+            transfer.setPower(power);
+        }
     }
 
-    // Stop intake but allow transfer to continue (for shooting)
+    // Stop intake but allow transfer to continue
     public void stopIntakeOnly() {
         intake.setPower(IDLE);
     }
-
-
 }

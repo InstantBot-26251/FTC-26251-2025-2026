@@ -82,7 +82,7 @@ public class RobotE {
 
         // Initialize subsystems
         intake = new Intake(hardwareMap);
-        ilc = new InertialLaunchCore(hardwareMap);
+        ilc = new InertialLaunchCore(hardwareMap, intake);
         follower = Constants.createFollower(hardwareMap);
 
         // Initialize commands
@@ -106,7 +106,7 @@ public class RobotE {
 
     // Autonomous init
     public void onAutoInit(Telemetry telemetry, HardwareMap hardwareMap, Pose startPose) {
-        // Setup telemetry
+// Setup telemetry
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Set starting pose
@@ -117,6 +117,7 @@ public class RobotE {
 
         // Reset subsystems
         intake.setIDLE();
+        intake.resumeTransferControl();  // Make sure intake has control initially
         ilc.forceIdle();
 
         this.telemetry.addLine("Auto Initialized");
@@ -132,7 +133,6 @@ public class RobotE {
         this.driveController = new GamepadEx(gamepad1);
         this.manipController = new GamepadEx(gamepad2);
 
-
         follower.setPose(new Pose(0, 0, Math.toRadians(180)));
         follower.startTeleopDrive();
 
@@ -142,9 +142,13 @@ public class RobotE {
 
         // Reset subsystems
         intake.setIDLE();
+        intake.resumeTransferControl();  // Make sure intake has control initially
         ilc.forceIdle();
-//
-//        bindControls();
+
+        // *** CRITICAL: Register subsystems with CommandScheduler ***
+        CommandScheduler.getInstance().reset();
+        CommandScheduler.getInstance().registerSubsystem(intake);
+        CommandScheduler.getInstance().registerSubsystem(ilc);
 
         this.telemetry.addLine("Teleop Initialized");
         this.telemetry.addData("Alliance", alliance);
@@ -204,22 +208,34 @@ public class RobotE {
         manipController.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     shootCommand.cancel();
-                    ilc.forceIdle();
+                    ilc.forceIdle();  // This will return transfer control to intake
                     intake.setIDLE();
                 }));
 
         // Manual ILC control (for testing/tuning)
         // DPAD_UP: Start spinup only
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                        .whenPressed(() -> ilc.startSpinup());
+                .whenPressed(new InstantCommand(() -> {
+                    // Force idle first to reset state, then activate and start spinup
+                    ilc.forceIdle();  // This resets to IDLE and returns control to intake
+                    ilc.activateILC();  // Make sure ILC is activated
+                    ilc.startSpinup();  // This will take control from intake and start sequence
+                }));
 
         // DPAD_DOWN: Manual shoot (if ready)
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(() -> ilc.shoot());
+                .whenPressed(new InstantCommand(() -> {
+                    // Only shoot if actually ready
+                    if (ilc.isReady()) {
+                        ilc.shoot();
+                    }
+                }));
 
-        // DPAD_RIGHT: Stop shooting
+        // DPAD_RIGHT: Stop shooting and return control to intake
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(() -> ilc.stopShooting());
+                .whenPressed(new InstantCommand(() -> {
+                    ilc.forceIdle();  // This will return transfer control to intake
+                }));
     }
 
     public void handleTeleopControls() {
@@ -271,6 +287,7 @@ public class RobotE {
         endPose = follower.getPose();
         intakeCommand.cancel();
         shootCommand.cancel();
+        ilc.forceIdle();  // Return control to intake on stop
     }
 
     private void resetHeading() {
@@ -335,12 +352,6 @@ public class RobotE {
     }
 
     public double getTargetDistance() {
-//        // Try vision first
-//        double visionDistance = ilc.getDistance();
-//        if (visionDistance > 0) {
-//            return visionDistance;
-//        }
-
         // Fallback to odometry
         Pose pose = follower.getPose();
         double dx = goalX - pose.getX();

@@ -11,9 +11,9 @@ public class IntakeConstants {
     public static double REVERSE = -1;
 
     public static double INTAKE_UNJAM_TIME = 1.0; // TODO: Tune
-    public static int FULL_THRESHOLD = 3;
-
-    // SENSOR CONSTants
-    public static double PROXIMITY_THRESHOLD_CM = 3.0; // TODO: Tune
+//    public static int FULL_THRESHOLD = 3;
+//
+//    // SENSOR CONSTants
+//    public static double PROXIMITY_THRESHOLD_CM = 3.0; // TODO: Tune
 
 }
