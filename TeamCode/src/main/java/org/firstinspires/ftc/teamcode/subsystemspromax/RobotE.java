@@ -211,27 +211,15 @@ public class RobotE {
         // Manual ILC control (for testing/tuning)
         // DPAD_UP: Start spinup only
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isIdle()) {
-                        ilc.startSpinup();
-                    }
-                }));
+                        .whenPressed(() -> ilc.startSpinup());
 
         // DPAD_DOWN: Manual shoot (if ready)
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isReady()) {
-                        ilc.shoot();
-                    }
-                }));
+                .whenPressed(() -> ilc.shoot());
 
         // DPAD_RIGHT: Stop shooting
         manipController.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(() -> {
-                    if (ilc.isShooting()) {
-                        ilc.stopShooting();
-                    }
-                }));
+                .whenPressed(() -> ilc.stopShooting());
     }
 
     public void handleTeleopControls() {
